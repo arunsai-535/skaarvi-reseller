@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+skaarvi-reseller/node_modules/
+
+# Next.js
+.next/
+out/
+skaarvi-reseller/.next/
+skaarvi-reseller/out/
+
+# Environment variables
+.env
+.env*.local
+*.env.local
+
+# Database
+*.sqlite
+*.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+._*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+build/
+dist/
+*.tsbuildinfo
+
+# Backups (for database schema backups)
+backups/
+*.sql.gz
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Optional
+.turbo
+.vercel
+.eslintcache
+.stylelintcache
