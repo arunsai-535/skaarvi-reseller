@@ -9,6 +9,10 @@ import manufacturerReducer from './slices/manufacturerSlice';
 import productReducer from './slices/productSlice';
 import orderReducer from './slices/orderSlice';
 import notificationReducer from './slices/notificationSlice';
+import inventoryReducer from './slices/inventorySlice';
+import earningsReducer from './slices/earningsSlice';
+import settlementsReducer from './slices/settlementsSlice';
+import reportsReducer from './slices/reportsSlice';
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -17,6 +21,10 @@ const rootReducer = combineReducers({
   product: productReducer,
   order: orderReducer,
   notification: notificationReducer,
+  inventory: inventoryReducer,
+  earnings: earningsReducer,
+  settlements: settlementsReducer,
+  reports: reportsReducer,
 });
 
 // Persist configuration

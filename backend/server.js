@@ -4,14 +4,17 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
+
+// CORS - Allow frontend on port 3002
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3002',
   credentials: true
 }));
 
@@ -34,6 +37,9 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// Serve static uploads folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -47,10 +53,18 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/manufacturers', require('./routes/manufacturers'));
 app.use('/api/products', require('./routes/products'));
+app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/inventory', require('./routes/inventory'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/earnings', require('./routes/earnings'));
+app.use('/api/settlements', require('./routes/settlements'));
+app.use('/api/reports', require('./routes/reports'));
 app.use('/api/notifications', require('./routes/notifications'));
+
+// Admin Routes
+app.use('/api/admin/products', require('./routes/admin/products'));
+app.use('/api/admin/settings', require('./routes/admin/settings'));
 
 // 404 handler
 app.use((req, res) => {

@@ -1,83 +1,33 @@
 import { NextResponse } from 'next/server';
-import { User, Manufacturer, OTP } from '@/models';
-import { generateToken, generateRefreshToken } from '@/lib/jwt';
-import { sequelize } from '@/lib/database';
-import { Op } from 'sequelize';
 
 // @route   POST /api/auth/verify-otp
-// @desc    Verify OTP and login
+// @desc    Proxy to backend verify-otp endpoint
 // @access  Public
 export async function POST(request) {
   try {
-    const { mobile, otp } = await request.json();
-
-    // Validate input
-    if (!mobile || !otp) {
-      return NextResponse.json(
-        { status: 'error', message: 'Mobile number and OTP are required' },
-        { status: 400 }
-      );
-    }
-
-    // Initialize database if needed
-    await sequelize.sync();
-
-    // Find OTP record
-    const otpRecord = await OTP.findOne({
-      where: {
-        mobile,
-        otp,
-        verified: false,
-        expiresAt: {
-          [Op.gt]: new Date(),
-        },
+    const body = await request.json();
+    
+    // Forward request to backend
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+    const response = await fetch(`${backendUrl}/api/auth/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      order: [['created_at', 'DESC']],
+      body: JSON.stringify(body),
     });
 
-    if (!otpRecord) {
-      return NextResponse.json(
-        { status: 'error', message: 'Invalid or expired OTP' },
-        { status: 400 }
-      );
-    }
-
-    // Mark OTP as verified
-    await otpRecord.update({ verified: true });
-
-    // Find or create user
-    let user = await User.findOne({
-      where: { mobile },
-      include: [{
-        model: Manufacturer,
-        as: 'manufacturer',
-      }],
-    });
-
-    let isNewUser = false;
-
-    if (!user) {
-      // Create new user with manufacturer role
-      user = await User.create({
-        mobile,
-        role: 'manufacturer',
-        isActive: true,
-        isVerified: true,
-        lastLogin: new Date(),
-      });
-      isNewUser = true;
-    } else {
-      // Update last login
-      await user.update({ lastLogin: new Date() });
-    }
-
-    // Get fresh user data with manufacturer details
-    user = await User.findOne({
-      where: { id: user.id },
-      include: [{
-        model: Manufacturer,
-        as: 'manufacturer',
-      }],
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Verify OTP proxy error:', error);
+    return NextResponse.json(
+      { status: 'error', message: 'Failed to verify OTP' },
+      { status: 500 }
+    );
+  }
+}
     });
 
     // Generate JWT tokens with claims

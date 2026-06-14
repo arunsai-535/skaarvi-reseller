@@ -1,10 +1,11 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { s3, bucket } = require('../config/aws');
 const { UPLOAD_LIMITS } = require('../config/constants');
 
-// Memory storage for multer
+// Memory storage for multer (used for both S3 and local)
 const storage = multer.memoryStorage();
 
 // File filter
@@ -50,6 +51,66 @@ const upload = multer({
   },
   fileFilter: fileFilter
 });
+
+// Upload file locally
+const uploadLocally = async (file, userId, email, subfolder = 'documents') => {
+  const fileExtension = path.extname(file.originalname);
+  const fileName = `${uuidv4()}${fileExtension}`;
+  
+  // Create folder structure: uploads/{userId}/{email}/{subfolder}
+  const uploadDir = path.join(__dirname, '..', 'uploads', userId.toString(), email, subfolder);
+  
+  // Create directories if they don't exist
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  
+  const filePath = path.join(uploadDir, fileName);
+  
+  try {
+    // Write file buffer to disk
+    fs.writeFileSync(filePath, file.buffer);
+    
+    // Return relative path for storage in database
+    return `/uploads/${userId}/${email}/${subfolder}/${fileName}`;
+  } catch (error) {
+    throw new Error(`Failed to save file locally: ${error.message}`);
+  }
+};
+
+// Upload product file locally with unique structure
+const uploadProductFile = async (file, userId, productName, subfolder = 'images') => {
+  const fileExtension = path.extname(file.originalname);
+  const timestamp = Date.now();
+  const uniqueId = uuidv4().split('-')[0]; // Use first part of UUID for brevity
+  const fileName = `${timestamp}_${uniqueId}${fileExtension}`;
+  
+  // Create folder structure: uploads/products/{userId}/{sanitized-product-name}/{subfolder}
+  const sanitizedProductName = productName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with dashes
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
+    .substring(0, 50); // Limit length
+  
+  const uploadDir = path.join(__dirname, '..', 'uploads', 'products', userId.toString(), sanitizedProductName, subfolder);
+  
+  // Create directories if they don't exist
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  
+  const filePath = path.join(uploadDir, fileName);
+  
+  try {
+    // Write file buffer to disk
+    fs.writeFileSync(filePath, file.buffer);
+    
+    // Return relative path for storage in database
+    return `/uploads/products/${userId}/${sanitizedProductName}/${subfolder}/${fileName}`;
+  } catch (error) {
+    throw new Error(`Failed to save product file locally: ${error.message}`);
+  }
+};
 
 // Upload file to S3
 const uploadToS3 = async (file, folder = 'products') => {
@@ -98,6 +159,8 @@ const uploadMiddleware = {
 
 module.exports = {
   uploadMiddleware,
+  uploadLocally,
+  uploadProductFile,
   uploadToS3,
   deleteFromS3
 };

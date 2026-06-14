@@ -1,37 +1,131 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/slices/authSlice';
 import { 
   Package, 
   ShoppingCart, 
   DollarSign, 
   TrendingUp,
-  Eye,
-  Users,
-  ArrowUpRight,
-  ArrowDownRight,
-  MoreVertical,
   CheckCircle,
   Clock,
-  Wallet
-} from 'lucide-react';import ThemeSwitcher from '@/components/ThemeSwitcher';
+  Wallet,
+  Loader2,
+  LogOut,
+  BarChart3,
+  AlertTriangle
+} from 'lucide-react';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
+import NotificationBell from '@/components/NotificationBell';
+import { toast } from 'react-hot-toast';
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    totalProducts: 45,
-    activeProducts: 38,
-    pendingProducts: 7,
-    totalOrders: 234,
-    totalSales: 458900,
-    totalEarnings: 234500,
-    pendingSettlements: 45600,
+    totalProducts: 0,
+    activeProducts: 0,
+    pendingProducts: 0,
+    totalOrders: 0,
+    totalSales: 0,
+    totalEarnings: 0,
+    pendingSettlements: 0,
   });
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+    fetchLowStockProducts();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear cookies
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    
+    dispatch(logout());
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    toast.success('Logged out successfully');
+    router.push('/login');
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please login to continue');
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/manufacturers/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch dashboard data');
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'success' && result.data) {
+        setStats({
+          totalProducts: result.data.totalProducts || 0,
+          activeProducts: result.data.activeProducts || 0,
+          pendingProducts: result.data.pendingProducts || 0,
+          totalOrders: result.data.totalOrders || 0,
+          totalSales: result.data.totalSales || 0,
+          totalEarnings: result.data.totalEarnings || 0,
+          pendingSettlements: result.data.pendingSettlements || 0,
+        });
+        setRecentOrders(result.data.recentOrders || []);
+      }
+    } catch (error) {
+      console.error('Dashboard fetch error:', error);
+      toast.error('Failed to load dashboard: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLowStockProducts = async () => {
+    try {
+      const response = await fetch('/api/inventory?low_stock_only=true&limit=5');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setLowStockProducts(data.data.products || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch low stock products:', error);
+    }
+  };
+
+  const formatCurrency = (value) => {
+    if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(2)}L`;
+    } else if (value >= 1000) {
+      return `₹${(value / 1000).toFixed(1)}K`;
+    }
+    return `₹${value.toFixed(0)}`;
+  };
 
   const statsCards = [
     {
       title: 'Total Products',
       value: stats.totalProducts,
-      change: '+12%',
-      isPositive: true,
       icon: Package,
       color: 'primary',
       subtitle: 'All products'
@@ -39,8 +133,6 @@ export default function DashboardPage() {
     {
       title: 'Active Products',
       value: stats.activeProducts,
-      change: '+8%',
-      isPositive: true,
       icon: CheckCircle,
       color: 'success',
       subtitle: 'Live on marketplace'
@@ -48,8 +140,6 @@ export default function DashboardPage() {
     {
       title: 'Pending Products',
       value: stats.pendingProducts,
-      change: '-3%',
-      isPositive: false,
       icon: Clock,
       color: 'warning',
       subtitle: 'Awaiting approval'
@@ -57,47 +147,65 @@ export default function DashboardPage() {
     {
       title: 'Total Orders',
       value: stats.totalOrders,
-      change: '+23%',
-      isPositive: true,
       icon: ShoppingCart,
       color: 'primary',
       subtitle: 'All time orders'
     },
     {
       title: 'Total Sales',
-      value: `₹${(stats.totalSales / 1000).toFixed(1)}K`,
-      change: '+18%',
-      isPositive: true,
+      value: formatCurrency(stats.totalSales),
       icon: DollarSign,
       color: 'success',
       subtitle: 'Total revenue'
     },
     {
       title: 'Total Earnings',
-      value: `₹${(stats.totalEarnings / 1000).toFixed(1)}K`,
-      change: '+15%',
-      isPositive: true,
+      value: formatCurrency(stats.totalEarnings),
       icon: TrendingUp,
       color: 'success',
       subtitle: 'After commission'
     },
     {
       title: 'Pending Settlements',
-      value: `₹${(stats.pendingSettlements / 1000).toFixed(1)}K`,
-      change: '+5%',
-      isPositive: true,
+      value: formatCurrency(stats.pendingSettlements),
       icon: Wallet,
       color: 'warning',
       subtitle: 'To be settled'
     },
   ];
 
-  const recentOrders = [
-    { id: '#ORD001', product: 'Premium Laptop Stand', customer: 'Rahul Sharma', amount: 2499, status: 'Processing' },
-    { id: '#ORD002', product: 'Wireless Mouse', customer: 'Priya Patel', amount: 899, status: 'Shipped' },
-    { id: '#ORD003', product: 'USB-C Hub', customer: 'Amit Kumar', amount: 1599, status: 'Delivered' },
-    { id: '#ORD004', product: 'Laptop Bag', customer: 'Sneha Reddy', amount: 1299, status: 'New' },
-  ];
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      'delivered': 'badge-success',
+      'shipped': 'badge-primary',
+      'processing': 'badge-warning',
+      'new': 'badge-info',
+      'cancelled': 'badge-danger',
+      'returned': 'badge-secondary',
+    };
+    return statusMap[status?.toLowerCase()] || 'badge-secondary';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: 'rgb(var(--color-primary))' }} />
+          <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen transition-colors duration-200" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
@@ -114,11 +222,48 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3">
               <ThemeSwitcher />
-              <button className="btn btn-outline btn-sm">
-                Download Report
+              <NotificationBell />
+              <button 
+                onClick={() => router.push('/manufacturer/inventory')}
+                className="btn btn-outline btn-sm flex items-center gap-2"
+              >
+                <Package className="w-4 h-4" />
+                Inventory
               </button>
-              <button className="btn btn-primary btn-sm">
+              <button 
+                onClick={() => router.push('/manufacturer/earnings')}
+                className="btn btn-outline btn-sm flex items-center gap-2"
+              >
+                <DollarSign className="w-4 h-4" />
+                Earnings
+              </button>
+              <button 
+                onClick={() => router.push('/manufacturer/settlements')}
+                className="btn btn-outline btn-sm flex items-center gap-2"
+              >
+                <Wallet className="w-4 h-4" />
+                Settlements
+              </button>
+              <button 
+                onClick={() => router.push('/manufacturer/reports')}
+                className="btn btn-outline btn-sm flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Reports
+              </button>
+              <button 
+                onClick={() => router.push('/manufacturer/products/add')}
+                className="btn btn-primary btn-sm"
+              >
                 Add Product
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="btn btn-outline btn-sm flex items-center gap-2"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
               </button>
             </div>
           </div>
@@ -129,11 +274,11 @@ export default function DashboardPage() {
       <main className="p-6 space-y-6">
         {/* Stats Grid - 7 cards in responsive layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {statsCards.map((stat, index) => {
+          {statsCards.map((stat) => {
             const Icon = stat.icon;
             return (
               <div 
-                key={index}
+                key={stat.title}
                 className="card hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="flex items-start justify-between">
@@ -148,63 +293,70 @@ export default function DashboardPage() {
                     <Icon className={`w-6 h-6 text-${stat.color}-600`} />
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1 text-sm font-medium ${
-                    stat.isPositive ? 'text-success-600' : 'text-danger-600'
-                  }`}>
-                    {stat.isPositive ? (
-                      <ArrowUpRight className="w-4 h-4" />
-                    ) : (
-                      <ArrowDownRight className="w-4 h-4" />
-                    )}
-                    {stat.change}
-                  </span>
-                  <span className="text-sm text-gray-500">vs last month</span>
-                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/20 rounded-lg">
-                <Eye className="w-6 h-6" />
+        {/* Low Stock Alerts */}
+        {lowStockProducts.length > 0 && (
+          <div className="card border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Low Stock Alert
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {lowStockProducts.length} product{lowStockProducts.length > 1 ? 's' : ''} running low
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm opacity-90">Product Views</p>
-                <h3 className="text-2xl font-bold">12,453</h3>
-              </div>
+              <button 
+                onClick={() => router.push('/manufacturer/inventory?low_stock_only=true')}
+                className="text-sm text-yellow-600 hover:text-yellow-700 font-medium"
+              >
+                View All
+              </button>
+            </div>
+            <div className="space-y-3">
+              {lowStockProducts.map((product) => (
+                <div 
+                  key={product.id}
+                  className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => router.push('/manufacturer/inventory')}
+                >
+                  <div className="flex items-center gap-3">
+                    {product.images?.[0] && (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-12 h-12 rounded object-cover"
+                      />
+                    )}
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{product.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        SKU: {product.sku || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-red-600">
+                      {product.availableStock} / {product.low_stock_threshold}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Available / Threshold
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        )}
 
-          <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/20 rounded-lg">
-                <Users className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm opacity-90">Resellers Interested</p>
-                <h3 className="text-2xl font-bold">387</h3>
-              </div>
-            </div>
-          </div>
-
-          <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/20 rounded-lg">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm opacity-90">Conversion Rate</p>
-                <h3 className="text-2xl font-bold">23.4%</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        {/* 
         {/* Recent Orders */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
@@ -212,7 +364,10 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
               <p className="text-sm text-gray-600">Latest orders from resellers</p>
             </div>
-            <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            <button 
+              onClick={() => router.push('/manufacturer/orders')}
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            >
               View All
             </button>
           </div>
@@ -223,36 +378,39 @@ export default function DashboardPage() {
                 <tr>
                   <th>Order ID</th>
                   <th>Product</th>
-                  <th>Customer</th>
+                  <th>Quantity</th>
                   <th>Amount</th>
+                  <th>Date</th>
                   <th>Status</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="font-medium text-primary-600">{order.id}</td>
-                    <td>{order.product}</td>
-                    <td>{order.customer}</td>
-                    <td>₹{order.amount.toLocaleString()}</td>
-                    <td>
-                      <span className={`badge ${
-                        order.status === 'Delivered' ? 'badge-success' :
-                        order.status === 'Shipped' ? 'badge-primary' :
-                        order.status === 'Processing' ? 'badge-warning' :
-                        'badge-gray'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="p-1 hover:bg-gray-100 rounded">
-                        <MoreVertical className="w-4 h-4 text-gray-500" />
-                      </button>
+                {recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center text-gray-500 py-8">
+                      No orders yet
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  recentOrders.map((order, index) => (
+                    <tr 
+                      key={order.id || index}
+                      onClick={() => router.push(`/manufacturer/orders/${order.id}`)}
+                      className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="font-medium text-primary-600">{order.id}</td>
+                      <td>{order.product}</td>
+                      <td>{order.quantity}</td>
+                      <td>₹{order.amount?.toLocaleString()}</td>
+                      <td className="text-sm text-gray-600">{formatDate(order.orderedAt)}</td>
+                      <td>
+                        <span className={`badge ${getStatusBadge(order.status)}`}>
+                          {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

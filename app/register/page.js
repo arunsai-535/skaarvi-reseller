@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { Building2, ArrowRight, Loader2, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,13 +9,16 @@ import { authAPI } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useSelector((state) => state.auth.user);
-  const [step, setStep] = useState(1); // 1: Basic Info, 2: Business Details, 3: Bank Details, 4: Documents
+  const [step, setStep] = useState(1); // 1: Basic Info, 2: Business Details, 3: Bank Details, 4: Documents (OTP bypassed)
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
   const [formData, setFormData] = useState({
     // Pre-fill if user exists
     mobile: user?.mobile?.replace('+91', '') || '',
-    email: user?.email || '',
+    email: user?.email || searchParams.get('email') || '',
     // Step 1: Basic Information
     companyName: '',
     brandName: '',
@@ -46,6 +49,12 @@ export default function RegisterPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // OTP verification bypassed - users start directly at registration
+  useEffect(() => {
+    // Automatically start at step 1
+    setStep(1);
+  }, []);
+
   const handleFileChange = (e, fieldName) => {
     const file = e.target.files[0];
     if (file && file.size > 5 * 1024 * 1024) {
@@ -53,6 +62,49 @@ export default function RegisterPage() {
       return;
     }
     setFormData(prev => ({ ...prev, [fieldName]: file }));
+  };
+
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    if (!formData.email) {
+      toast.error('Please enter your email');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await authAPI.sendRegistrationOtp(formData.email);
+      setOtpSent(true);
+      toast.success('OTP sent to your email');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (!otp || otp.length !== 6) {
+      toast.error('Please enter valid 6-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authAPI.verifyOtp(formData.email, otp);
+      
+      // Store tokens
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      
+      toast.success('Email verified! Now complete your registration');
+      setStep(1); // Move to basic info step
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleNext = () => {
@@ -67,6 +119,25 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
 
+    console.log('=== Starting Registration Submission ===');
+
+    // Validate required files
+    if (!formData.panCard) {
+      toast.error('Please upload PAN Card');
+      setLoading(false);
+      return;
+    }
+    if (!formData.cancelledCheque) {
+      toast.error('Please upload Cancelled Cheque or Bank Proof');
+      setLoading(false);
+      return;
+    }
+    if (!formData.companyLogo) {
+      toast.error('Please upload Company Logo');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Create FormData for file upload
       const submitData = new FormData();
@@ -75,36 +146,56 @@ export default function RegisterPage() {
       Object.keys(formData).forEach(key => {
         if (formData[key] && typeof formData[key] !== 'object') {
           submitData.append(key, formData[key]);
+          console.log(`Added field: ${key} = ${formData[key]}`);
         }
       });
 
       // Format mobile with country code
       submitData.set('mobile', `+91${formData.mobile}`);
+      console.log('Mobile formatted:', `+91${formData.mobile}`);
 
       // Append files
       if (formData.gstCertificate) {
         submitData.append('gstCertificate', formData.gstCertificate);
+        console.log('Added gstCertificate:', formData.gstCertificate.name);
       }
       if (formData.panCard) {
         submitData.append('panCard', formData.panCard);
+        console.log('Added panCard:', formData.panCard.name);
       }
       if (formData.cancelledCheque) {
         submitData.append('cancelledCheque', formData.cancelledCheque);
+        console.log('Added cancelledCheque:', formData.cancelledCheque.name);
       }
       if (formData.companyLogo) {
         submitData.append('companyLogo', formData.companyLogo);
+        console.log('Added companyLogo:', formData.companyLogo.name);
       }
 
+      console.log('Calling authAPI.register...');
       const response = await authAPI.register(submitData);
+      console.log('Registration response:', response);
       
-      toast.success(response.message);
+      toast.success(response.message || 'Registration submitted successfully!');
       
-      // Redirect to pending approval page
-      router.push('/pending-approval');
+      // Clear localStorage and redirect to login page
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      
+      // Redirect to login page
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      console.error('=== Registration Error ===');
+      console.error('Error object:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
       toast.error(errorMessage);
     } finally {
+      console.log('=== Registration Submission Complete ===');
       setLoading(false);
     }
   };
@@ -143,11 +234,11 @@ export default function RegisterPage() {
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-gray-600">Basic Info</span>
-            <span className="text-xs text-gray-600">Business</span>
-            <span className="text-xs text-gray-600">Bank Details</span>
-            <span className="text-xs text-gray-600">Documents</span>
+          <div className="flex justify-between mt-2 text-xs text-gray-600">
+            <span>Basic Info</span>
+            <span>Business</span>
+            <span>Bank Details</span>
+            <span>Documents</span>
           </div>
         </div>
 
@@ -502,20 +593,21 @@ export default function RegisterPage() {
                     <label className="label">
                       PAN Card *
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer">
+                    <div className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer ${
+                      formData.panCard ? 'border-green-400 bg-green-50' : 'border-gray-300'
+                    }`}>
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(e, 'panCard')}
                         className="hidden"
                         id="panCard"
-                        required
                       />
                       <label htmlFor="panCard" className="cursor-pointer">
                         <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-600">
                           {formData.panCard 
-                            ? formData.panCard.name 
+                            ? `✓ ${formData.panCard.name}` 
                             : 'Click to upload PAN Card'
                           }
                         </p>
@@ -528,20 +620,21 @@ export default function RegisterPage() {
                     <label className="label">
                       Cancelled Cheque / Bank Proof *
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer">
+                    <div className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer ${
+                      formData.cancelledCheque ? 'border-green-400 bg-green-50' : 'border-gray-300'
+                    }`}>
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(e, 'cancelledCheque')}
                         className="hidden"
                         id="cancelledCheque"
-                        required
                       />
                       <label htmlFor="cancelledCheque" className="cursor-pointer">
                         <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-600">
                           {formData.cancelledCheque 
-                            ? formData.cancelledCheque.name 
+                            ? `✓ ${formData.cancelledCheque.name}` 
                             : 'Click to upload Cancelled Cheque or Bank Statement'
                           }
                         </p>
@@ -554,20 +647,21 @@ export default function RegisterPage() {
                     <label className="label">
                       Company Logo *
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer">
+                    <div className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer ${
+                      formData.companyLogo ? 'border-green-400 bg-green-50' : 'border-gray-300'
+                    }`}>
                       <input
                         type="file"
                         accept=".jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(e, 'companyLogo')}
                         className="hidden"
                         id="companyLogo"
-                        required
                       />
                       <label htmlFor="companyLogo" className="cursor-pointer">
                         <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-600">
                           {formData.companyLogo 
-                            ? formData.companyLogo.name 
+                            ? `✓ ${formData.companyLogo.name}` 
                             : 'Click to upload Company Logo'
                           }
                         </p>
@@ -587,7 +681,7 @@ export default function RegisterPage() {
 
             {/* Navigation Buttons */}
             <div className="flex gap-3 mt-6">
-              {step > 1 && (
+              {step > 0 && (
                 <button
                   type="button"
                   onClick={handleBack}
@@ -605,11 +699,13 @@ export default function RegisterPage() {
                 {loading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Submitting...
+                    {step === 0 ? (otpSent ? 'Verifying...' : 'Sending OTP...') : 
+                     step === 4 ? 'Submitting...' : 'Processing...'}
                   </>
                 ) : (
                   <>
-                    {step === 3 ? 'Submit Registration' : 'Next'}
+                    {step === 0 ? (otpSent ? 'Verify OTP' : 'Send OTP') :
+                     step === 4 ? 'Submit Registration' : 'Next'}
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
