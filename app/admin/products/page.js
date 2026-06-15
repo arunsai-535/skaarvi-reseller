@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Edit, CheckCircle, XCircle, Eye, DollarSign } from 'lucide-react';
+import ConfirmModal from '@/components/ConfirmModal';
+import { toast } from 'react-hot-toast';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('pending_approval'); // Default to pending approval
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -21,6 +23,18 @@ export default function AdminProductsPage() {
     platformFeeOverride: null
   });
   const [saving, setSaving] = useState(false);
+  
+  // Confirm modal states
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'warning',
+    title: '',
+    message: '',
+    showInput: false,
+    inputValue: '',
+    inputLabel: '',
+    onConfirm: null
+  });
 
   useEffect(() => {
     fetchProducts();
@@ -79,63 +93,83 @@ export default function AdminProductsPage() {
       if (data.status === 'success') {
         setShowPricingModal(false);
         fetchProducts(); // Refresh list
-        alert('Pricing updated successfully!');
+        toast.success('Pricing updated successfully!');
       } else {
-        alert(data.message || 'Failed to update pricing');
+        toast.error(data.message || 'Failed to update pricing');
       }
     } catch (error) {
       console.error('Update pricing error:', error);
-      alert('Failed to update pricing');
+      toast.error('Failed to update pricing');
     } finally {
       setSaving(false);
     }
   };
 
   const handleApprove = async (productId) => {
-    if (!confirm('Approve this product?')) return;
+    setConfirmModal({
+      isOpen: true,
+      type: 'success',
+      title: 'Approve Product',
+      message: 'Are you sure you want to approve this product? It will be visible to all resellers.',
+      showInput: false,
+      onConfirm: async () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        try {
+          const response = await fetch(`/api/admin/products/${productId}/approve`, {
+            method: 'PATCH',
+            credentials: 'include'
+          });
 
-    try {
-      const response = await fetch(`/api/admin/products/${productId}/approve`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-      if (data.status === 'success') {
-        fetchProducts();
-        alert('Product approved!');
-      } else {
-        alert(data.message || 'Failed to approve product');
+          const data = await response.json();
+          if (data.status === 'success') {
+            fetchProducts();
+            toast.success('Product approved successfully!');
+          } else {
+            toast.error(data.message || 'Failed to approve product');
+          }
+        } catch (error) {
+          console.error('Approve error:', error);
+          toast.error('Failed to approve product');
+        }
       }
-    } catch (error) {
-      console.error('Approve error:', error);
-      alert('Failed to approve product');
-    }
+    });
   };
 
   const handleReject = async (productId) => {
-    const reason = prompt('Enter rejection reason:');
-    if (!reason) return;
+    setConfirmModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Reject Product',
+      message: 'Please provide a reason for rejecting this product:',
+      showInput: true,
+      inputValue: '',
+      inputLabel: 'Rejection Reason',
+      inputRequired: true,
+      onConfirm: async () => {
+        const reason = confirmModal.inputValue;
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        
+        try {
+          const response = await fetch(`/api/admin/products/${productId}/reject`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ reason })
+          });
 
-    try {
-      const response = await fetch(`/api/admin/products/${productId}/reject`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ reason })
-      });
-
-      const data = await response.json();
-      if (data.status === 'success') {
-        fetchProducts();
-        alert('Product rejected');
-      } else {
-        alert(data.message || 'Failed to reject product');
+          const data = await response.json();
+          if (data.status === 'success') {
+            fetchProducts();
+            toast.success('Product rejected successfully');
+          } else {
+            toast.error(data.message || 'Failed to reject product');
+          }
+        } catch (error) {
+          console.error('Reject error:', error);
+          toast.error('Failed to reject product');
+        }
       }
-    } catch (error) {
-      console.error('Reject error:', error);
-      alert('Failed to reject product');
-    }
+    });
   };
 
   const formatCurrency = (amount) => {
@@ -271,9 +305,9 @@ export default function AdminProductsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {product.ProductImages?.[0] && (
+                        {product.images?.[0] && (
                           <img
-                            src={product.ProductImages[0].imageUrl}
+                            src={product.images[0].imageUrl}
                             alt={product.name}
                             className="w-12 h-12 rounded-lg object-cover"
                           />
@@ -285,7 +319,7 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                      {product.Manufacturer?.businessName || 'N/A'}
+                      {product.manufacturer?.companyName || product.manufacturer?.brandName || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-right font-medium" style={{ color: 'rgb(var(--color-text))' }}>
                       {formatCurrency(product.costPrice)}
@@ -470,6 +504,22 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        showInput={confirmModal.showInput}
+        inputLabel={confirmModal.inputLabel}
+        inputValue={confirmModal.inputValue}
+        onInputChange={(value) => setConfirmModal({ ...confirmModal, inputValue: value })}
+        inputRequired={confirmModal.inputRequired}
+        confirmText={confirmModal.type === 'danger' ? 'Reject' : 'Approve'}
+      />
     </div>
   );
 }

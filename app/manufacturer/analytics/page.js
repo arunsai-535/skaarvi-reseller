@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import AnalyticsCard from '@/components/manufacturer/analytics/AnalyticsCard';
 import AnalyticsTable from '@/components/manufacturer/analytics/AnalyticsTable';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
 import { toast } from 'react-hot-toast';
 
 export default function AnalyticsPage() {
@@ -96,10 +95,10 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-surface))' }} flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading analytics...</p>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'rgb(var(--color-primary))' }} />
+          <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Loading analytics...</p>
         </div>
       </div>
     );
@@ -109,33 +108,20 @@ export default function AnalyticsPage() {
   const products = analytics?.products || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-surface))' }}">
+    <div>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Reseller Demand Analytics
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Track how resellers interact with your products
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manufacturer/dashboard')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Back to Dashboard
-              </button>
-              <ThemeSwitcher />
-            </div>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+            Reseller Demand Analytics
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            Track how resellers interact with your products
+          </p>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-6">
         {/* Date Range Filter */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -266,7 +252,7 @@ export default function AnalyticsPage() {
             onSort={(field) => handleSortChange(field)}
           />
         </div>
-      </main>
+      </div>
     </div>
   );
 }

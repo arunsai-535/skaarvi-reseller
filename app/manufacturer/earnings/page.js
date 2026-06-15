@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEarningsOverview, fetchProductEarnings } from '@/store/slices/earningsSlice';
-import { DollarSign, TrendingUp, CreditCard, Clock, ArrowLeft, Search, Loader2 } from 'lucide-react';
+import { DollarSign, TrendingUp, CreditCard, Clock, Search, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function EarningsPage() {
@@ -82,22 +82,14 @@ export default function EarningsPage() {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => router.push('/manufacturer/dashboard')}
-            className="flex items-center mb-4 transition-colors hover:opacity-70"
-            style={{ color: 'rgb(var(--color-primary))' }}
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
             Earnings Overview
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
             Track your sales, earnings, and settlements
           </p>
         </div>

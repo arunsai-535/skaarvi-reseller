@@ -22,6 +22,13 @@ export default function ProductShareButton({
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Ensure we have a full URL for sharing
+  const getFullUrl = () => {
+    if (typeof window === 'undefined') return productUrl;
+    if (productUrl.startsWith('http')) return productUrl;
+    return `${window.location.origin}${productUrl}`;
+  };
+
   const trackShare = async (platform) => {
     try {
       const token = localStorage.getItem('token');
@@ -52,7 +59,8 @@ export default function ProductShareButton({
   };
 
   const handleWhatsAppShare = () => {
-    const text = `Check out ${productName}!\n${productUrl}`;
+    const fullUrl = getFullUrl();
+    const text = `Check out ${productName}!\n${fullUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
     trackShare('whatsapp');
@@ -61,8 +69,9 @@ export default function ProductShareButton({
   };
 
   const handleEmailShare = () => {
+    const fullUrl = getFullUrl();
     const subject = `Check out ${productName}`;
-    const body = `I found this product and thought you might be interested:\n\n${productName}\n\n${productUrl}`;
+    const body = `I found this product and thought you might be interested:\n\n${productName}\n\n${fullUrl}`;
     const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoUrl;
     trackShare('email');
@@ -72,7 +81,8 @@ export default function ProductShareButton({
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(productUrl);
+      const fullUrl = getFullUrl();
+      await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
       trackShare('copy_link');
       toast.success('Link copied to clipboard!');

@@ -6,6 +6,7 @@ const Notification = require('./notification');
 const ManufacturerEarnings = require('./manufacturerEarnings');
 const ManufacturerSettlement = require('./manufacturerSettlement');
 const ProductAnalytics = require('./productAnalytics');
+const { User, Manufacturer } = require('./user');
 
 // Simple slug generator function
 const slugify = (text) => {
@@ -424,9 +425,12 @@ Category.hasMany(Category, { as: 'children', foreignKey: 'parent_id' });
 Category.belongsTo(Category, { as: 'parent', foreignKey: 'parent_id' });
 
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
+Product.belongsTo(Manufacturer, { foreignKey: 'manufacturer_id', as: 'manufacturer' });
 Product.hasMany(ProductImage, { foreignKey: 'product_id', as: 'images', onDelete: 'CASCADE' });
 Product.hasMany(ProductVideo, { foreignKey: 'product_id', as: 'videos', onDelete: 'CASCADE' });
 Product.hasMany(ProductPricingHistory, { foreignKey: 'product_id', as: 'priceHistory', onDelete: 'CASCADE' });
+
+Manufacturer.hasMany(Product, { foreignKey: 'manufacturer_id', as: 'products' });
 
 ProductImage.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 ProductVideo.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
@@ -451,6 +455,8 @@ ProductAnalytics.belongsTo(Product, { foreignKey: 'product_id', as: 'product' })
 
 module.exports = {
   sequelize,
+  User,
+  Manufacturer,
   Category,
   Product,
   ProductImage,

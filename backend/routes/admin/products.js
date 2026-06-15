@@ -58,21 +58,26 @@ router.get('/', authMiddleware, adminOnly, async (req, res) => {
       include: [
         {
           model: Category,
+          as: 'category',
           attributes: ['id', 'name']
         },
         {
           model: Manufacturer,
-          attributes: ['id', 'businessName'],
+          attributes: ['id', 'companyName', 'brandName'],
+          as: 'manufacturer',
           include: [{
             model: User,
-            attributes: ['id', 'email', 'firstName', 'lastName']
+            attributes: ['id', 'email', 'mobile', 'role'],
+            as: 'user'
           }]
         },
         {
           model: ProductImage,
-          attributes: ['id', 'imageUrl', 'displayOrder'],
+          as: 'images',
+          attributes: ['id', 'imageUrl', 'sortOrder'],
           limit: 1,
-          order: [['displayOrder', 'ASC']]
+          separate: true,
+          order: [['sortOrder', 'ASC']]
         }
       ],
       limit: parseInt(limit),

@@ -29,6 +29,8 @@ export default function AdminLoginPage() {
     }
 
     setLoading(true);
+    console.log('[Admin Login] Attempting login with email:', email);
+    
     try {
       const response = await fetch(`/api/auth/login-bypass`, {
         method: 'POST',
@@ -36,8 +38,12 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, userType: 'admin' }),
       });
       
+      console.log('[Admin Login] Response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('[Admin Login] Error response:', errorData);
+        
         if (errorData.code === 'EMAIL_NOT_FOUND') {
           toast.error('Email not registered');
           return;
@@ -46,10 +52,17 @@ export default function AdminLoginPage() {
           toast.error('This login is for administrators only. Please use the correct login page.');
           return;
         }
+        if (errorData.code === 'PROXY_ERROR') {
+          toast.error('Connection error. Please check if the backend server is running.');
+          setError(errorData.details || 'Backend connection failed');
+          return;
+        }
         throw new Error(errorData.message || 'Login failed');
       }
 
       const data = await response.json();
+      console.log('[Admin Login] Success, user role:', data.data?.user?.role);
+      
       const { user, token, refreshToken } = data.data;
 
       // Verify user is admin
@@ -68,6 +81,7 @@ export default function AdminLoginPage() {
       toast.success('Welcome, Admin!');
       router.push('/admin/dashboard');
     } catch (err) {
+      console.error('[Admin Login] Caught error:', err);
       const errorMessage = err.message || 'Login failed';
       setError(errorMessage);
       toast.error(errorMessage);

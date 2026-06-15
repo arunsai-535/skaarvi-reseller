@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSettlements, fetchSettlementDetail, setFilters } from '@/store/slices/settlementsSlice';
-import { ArrowLeft, FileText, Loader2, X } from 'lucide-react';
+import { FileText, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function SettlementsPage() {
@@ -70,22 +70,14 @@ export default function SettlementsPage() {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => router.push('/manufacturer/dashboard')}
-            className="flex items-center mb-4 transition-colors hover:opacity-70"
-            style={{ color: 'rgb(var(--color-primary))' }}
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </button>
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
             Settlement History
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
             View your payment settlements and status
           </p>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Save, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import ConfirmModal from '@/components/ConfirmModal';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState({
@@ -15,6 +16,15 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'warning',
+    title: '',
+    message: '',
+    onConfirm: null
+  });
 
   // Fetch current settings
   useEffect(() => {
@@ -79,34 +89,39 @@ export default function AdminSettingsPage() {
   };
 
   const handleReset = async () => {
-    if (!confirm('Are you sure you want to reset all settings to defaults?')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Reset Settings',
+      message: 'Are you sure you want to reset all settings to defaults? This action cannot be undone.',
+      onConfirm: async () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        try {
+          setSaving(true);
+          setMessage({ type: '', text: '' });
 
-    try {
-      setSaving(true);
-      setMessage({ type: '', text: '' });
+          const response = await fetch('/api/admin/settings/reset', {
+            method: 'POST',
+            credentials: 'include'
+          });
 
-      const response = await fetch('/api/admin/settings/reset', {
-        method: 'POST',
-        credentials: 'include'
-      });
+          const data = await response.json();
 
-      const data = await response.json();
-
-      if (data.status === 'success') {
-        setMessage({ type: 'success', text: 'Settings reset to defaults!' });
-        setSettings(data.data.settings);
-        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-      } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to reset settings' });
+          if (data.status === 'success') {
+            setMessage({ type: 'success', text: 'Settings reset to defaults!' });
+            setSettings(data.data.settings);
+            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+          } else {
+            setMessage({ type: 'error', text: data.message || 'Failed to reset settings' });
+          }
+        } catch (error) {
+          console.error('Reset settings error:', error);
+          setMessage({ type: 'error', text: 'Failed to reset settings' });
+        } finally {
+          setSaving(false);
+        }
       }
-    } catch (error) {
-      console.error('Reset settings error:', error);
-      setMessage({ type: 'error', text: 'Failed to reset settings' });
-    } finally {
-      setSaving(false);
-    }
+    });
   };
 
   if (loading) {
@@ -301,6 +316,18 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText="Reset"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

@@ -29,6 +29,8 @@ export default function ManufacturerLoginPage() {
     }
 
     setLoading(true);
+    console.log('[Login] Attempting login with email:', email);
+    
     try {
       const response = await fetch(`/api/auth/login-bypass`, {
         method: 'POST',
@@ -36,8 +38,12 @@ export default function ManufacturerLoginPage() {
         body: JSON.stringify({ email, userType: 'manufacturer' }),
       });
       
+      console.log('[Login] Response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('[Login] Error response:', errorData);
+        
         if (errorData.code === 'EMAIL_NOT_FOUND') {
           toast.error('Email not registered. Redirecting to registration...');
           setTimeout(() => {
@@ -49,10 +55,17 @@ export default function ManufacturerLoginPage() {
           toast.error('Please use the correct login page for your account type.');
           return;
         }
+        if (errorData.code === 'PROXY_ERROR') {
+          toast.error('Connection error. Please check if the backend server is running.');
+          setError(errorData.details || 'Backend connection failed');
+          return;
+        }
         throw new Error(errorData.message || 'Login failed');
       }
 
       const data = await response.json();
+      console.log('[Login] Success, user role:', data.data?.user?.role);
+      
       const { user, token, refreshToken } = data.data;
 
       // Verify user is manufacturer
@@ -82,6 +95,7 @@ export default function ManufacturerLoginPage() {
         toast.error('Your account status: ' + user.manufacturer.approvalStatus);
       }
     } catch (err) {
+      console.error('[Login] Caught error:', err);
       const errorMessage = err.message || 'Login failed';
       setError(errorMessage);
       toast.error(errorMessage);

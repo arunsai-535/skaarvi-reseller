@@ -10,15 +10,23 @@ import { trackProductClick } from '@/lib/productTracking';
 export default function ProductCard({ product, source = 'product_listing' }) {
   const router = useRouter();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  const productUrl = `${window.location.origin}/products/${product.id}`;
+  // Use relative URL for SSR compatibility
+  const productUrl = `/products/${product.id}`;
 
   const handleProductClick = async () => {
-    // Track click
-    await trackProductClick(product.id, source);
-    
-    // Navigate to product detail
-    router.push(`/products/${product.id}`);
+    try {
+      // Track click (non-blocking)
+      trackProductClick(product.id, source).catch(err => 
+        console.error('Tracking error:', err)
+      );
+      
+      // Navigate to product detail
+      router.push(`/products/${product.id}`);
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   const formatPrice = (price) => {
@@ -36,7 +44,7 @@ export default function ProductCard({ product, source = 'product_listing' }) {
         className="relative aspect-square bg-gray-100 dark:bg-gray-700 cursor-pointer overflow-hidden group"
         onClick={handleProductClick}
       >
-        {product.imageUrl ? (
+        {product.imageUrl && !imageError ? (
           <>
             <img
               src={product.imageUrl}
@@ -45,6 +53,11 @@ export default function ProductCard({ product, source = 'product_listing' }) {
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
               onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                console.error('Image failed to load:', product.imageUrl);
+                setImageError(true);
+                setImageLoaded(false);
+              }}
             />
             {!imageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">

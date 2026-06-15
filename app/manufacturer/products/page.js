@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit, Trash2, Eye, Package } from 'lucide-react';
 import api from '@/lib/api';
+import ConfirmModal from '@/components/ConfirmModal';
+import { toast } from 'react-hot-toast';
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -20,6 +22,15 @@ export default function ProductsPage() {
     limit: 20,
     total: 0,
     totalPages: 0,
+  });
+  
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'warning',
+    title: '',
+    message: '',
+    onConfirm: null
   });
 
   useEffect(() => {
@@ -40,15 +51,23 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-
-    try {
-      await api.delete(`/api/products/${id}`);
-      fetchProducts(); // Refresh list
-    } catch (error) {
-      console.error('Failed to delete product:', error);
-      alert('Failed to delete product');
-    }
+    setConfirmModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product? This action cannot be undone.',
+      onConfirm: async () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        try {
+          await api.delete(`/api/products/${id}`);
+          toast.success('Product deleted successfully');
+          fetchProducts(); // Refresh list
+        } catch (error) {
+          console.error('Failed to delete product:', error);
+          toast.error('Failed to delete product');
+        }
+      }
+    });
   };
 
   const getStatusBadge = (status) => {
@@ -68,8 +87,8 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen py-8" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -202,17 +221,18 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                          ₹{parseFloat(product.costPrice).toFixed(2)}
+                          ₹{product.costPrice ? parseFloat(product.costPrice).toFixed(2) : '0.00'}
                         </div>
                         <div className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Sell: ₹{parseFloat(product.sellingPrice).toFixed(2)}
+                          Sell: ₹{product.sellingPrice ? parseFloat(product.sellingPrice).toFixed(2) : '0.00'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                          {product.stockQuantity}
+                          {product.stockQuantity !== null && product.stockQuantity !== undefined ? product.stockQuantity : 0}
                         </div>
-                        {product.stockQuantity <= product.lowStockThreshold && (
+                        {(product.stockQuantity !== null && product.stockQuantity !== undefined) && 
+                         product.stockQuantity <= (product.lowStockThreshold || 10) && (
                           <div className="text-xs" style={{ color: 'rgb(var(--color-danger))' }}>
                             Low Stock
                           </div>
@@ -286,6 +306,18 @@ export default function ProductsPage() {
           </>
         )}
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

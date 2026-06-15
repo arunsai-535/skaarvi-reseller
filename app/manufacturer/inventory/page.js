@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus, Minus, Edit, History } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function InventoryPage() {
   const router = useRouter();
@@ -74,12 +76,13 @@ export default function InventoryPage() {
       if (data.status === 'success') {
         closeModal();
         fetchInventory();
+        toast.success('Stock updated successfully');
       } else {
-        alert(data.message || 'Failed to update stock');
+        toast.error(data.message || 'Failed to update stock');
       }
     } catch (error) {
       console.error('Stock action error:', error);
-      alert('Failed to update stock');
+      toast.error('Failed to update stock');
     }
   };
 
@@ -114,20 +117,10 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => router.push('/manufacturer/dashboard')}
-            className="flex items-center mb-4 transition-colors hover:opacity-70"
-            style={{ color: 'rgb(var(--color-primary))' }}
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Dashboard
-          </button>
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
             Inventory Management
           </h1>
@@ -256,31 +249,35 @@ export default function InventoryPage() {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => openModal(product, 'increase')}
-                            className="font-medium transition-colors hover:opacity-70"
-                            style={{ color: 'rgb(var(--color-success))' }}
+                            className="p-2 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+                            style={{ color: 'rgb(var(--color-success))', backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+                            title="Add Stock"
                           >
-                            + Add
+                            <Plus className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => openModal(product, 'decrease')}
-                            className="font-medium transition-colors hover:opacity-70"
-                            style={{ color: 'rgb(var(--color-danger))' }}
+                            className="p-2 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+                            style={{ color: 'rgb(var(--color-danger))', backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                            title="Remove Stock"
                           >
-                            - Remove
+                            <Minus className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => openModal(product, 'update')}
-                            className="font-medium transition-colors hover:opacity-70"
-                            style={{ color: 'rgb(var(--color-primary))' }}
+                            className="p-2 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+                            style={{ color: 'rgb(var(--color-primary))', backgroundColor: 'rgba(var(--color-primary), 0.1)' }}
+                            title="Update Stock"
                           >
-                            Update
+                            <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => router.push(`/manufacturer/inventory/${product.id}/history`)}
-                            className="font-medium transition-colors hover:opacity-70"
-                            style={{ color: 'rgb(var(--color-primary))' }}
+                            className="p-2 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+                            style={{ color: 'rgb(var(--color-text-secondary))', backgroundColor: 'rgba(var(--color-text-secondary), 0.1)' }}
+                            title="View History"
                           >
-                            History
+                            <History className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

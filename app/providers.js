@@ -17,25 +17,39 @@ export function Providers({ children }) {
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#363636',
-                color: '#fff',
+                background: 'rgb(var(--color-surface))',
+                color: 'rgb(var(--color-text))',
+                border: '1px solid rgb(var(--color-border))',
+                padding: '16px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
               },
               success: {
                 duration: 3000,
+                style: {
+                  background: 'rgba(var(--color-success), 0.1)',
+                  color: 'rgb(var(--color-text))',
+                  border: '1px solid rgb(var(--color-success))',
+                },
                 iconTheme: {
-                  primary: '#22c55e',
-                  secondary: '#fff',
+                  primary: 'rgb(var(--color-success))',
+                  secondary: 'rgb(var(--color-surface))',
                 },
               },
               error: {
                 duration: 4000,
+                style: {
+                  background: 'rgba(var(--color-danger), 0.1)',
+                  color: 'rgb(var(--color-text))',
+                  border: '1px solid rgb(var(--color-danger))',
+                },
                 iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
+                  primary: 'rgb(var(--color-danger))',
+                  secondary: 'rgb(var(--color-surface))',
+                },
               },
-            },
-          }}
-        />
+            }}
+          />
         </ThemeProvider>
       </PersistGate>
     </Provider>

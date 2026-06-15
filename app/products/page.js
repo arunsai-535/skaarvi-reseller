@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, Loader2, Package } from 'lucide-react';
+import { Search, Filter, Loader2, Package, ArrowLeft } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 
@@ -99,13 +99,21 @@ export default function ProductsPage() {
       <header className="bg-white dark:bg-gray-800 shadow sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Products
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Browse and share products with your customers
-              </p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Products
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Browse and share products with your customers
+                </p>
+              </div>
             </div>
             <ThemeSwitcher />
           </div>

@@ -100,11 +100,25 @@ router.get('/', authMiddleware, manufacturerOnly, async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
+    // Format numeric fields to ensure they're proper numbers
+    const formattedProducts = products.map(product => {
+      const plainProduct = product.get({ plain: true });
+      return {
+        ...plainProduct,
+        costPrice: plainProduct.costPrice ? parseFloat(plainProduct.costPrice) : 0,
+        sellingPrice: plainProduct.sellingPrice ? parseFloat(plainProduct.sellingPrice) : 0,
+        resellerMargin: plainProduct.resellerMargin ? parseFloat(plainProduct.resellerMargin) : 0,
+        skaarviMargin: plainProduct.skaarviMargin ? parseFloat(plainProduct.skaarviMargin) : 0,
+        stockQuantity: plainProduct.stockQuantity !== null ? parseInt(plainProduct.stockQuantity) : 0,
+        lowStockThreshold: plainProduct.lowStockThreshold !== null ? parseInt(plainProduct.lowStockThreshold) : 10,
+      };
+    });
+
     res.status(200).json({
       status: 'success',
       message: 'Products retrieved successfully',
       data: {
-        products,
+        products: formattedProducts,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
@@ -164,10 +178,22 @@ router.get('/:id', authMiddleware, adminOrManufacturer, async (req, res) => {
       });
     }
 
+    // Format numeric fields
+    const plainProduct = product.get({ plain: true });
+    const formattedProduct = {
+      ...plainProduct,
+      costPrice: plainProduct.costPrice ? parseFloat(plainProduct.costPrice) : 0,
+      sellingPrice: plainProduct.sellingPrice ? parseFloat(plainProduct.sellingPrice) : 0,
+      resellerMargin: plainProduct.resellerMargin ? parseFloat(plainProduct.resellerMargin) : 0,
+      skaarviMargin: plainProduct.skaarviMargin ? parseFloat(plainProduct.skaarviMargin) : 0,
+      stockQuantity: plainProduct.stockQuantity !== null ? parseInt(plainProduct.stockQuantity) : 0,
+      lowStockThreshold: plainProduct.lowStockThreshold !== null ? parseInt(plainProduct.lowStockThreshold) : 10,
+    };
+
     res.status(200).json({
       status: 'success',
       message: 'Product retrieved successfully',
-      data: { product },
+      data: { product: formattedProduct },
     });
   } catch (error) {
     console.error('Get product error:', error);
@@ -213,7 +239,7 @@ router.post('/',
         shippingCharges,
         shippingInfo,
         tags,
-        status = PRODUCT_STATUS.DRAFT,
+        status = PRODUCT_STATUS.PENDING_APPROVAL, // Submit for approval by default
       } = req.body;
 
       // Apply platform-controlled pricing margins (manufacturers cannot set these)

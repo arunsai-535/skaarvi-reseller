@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
 export async function POST(request) {
   try {
     const body = await request.json();
     
+    console.log('[Login Proxy] Forwarding login request to backend:', BACKEND_URL);
+    
     // Forward the request to the backend
-    const backendResponse = await fetch('http://localhost:5000/api/auth/login-bypass', {
+    const backendResponse = await fetch(`${BACKEND_URL}/api/auth/login-bypass`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -14,6 +18,9 @@ export async function POST(request) {
     });
 
     const data = await backendResponse.json();
+    
+    console.log('[Login Proxy] Backend response status:', backendResponse.status);
+    console.log('[Login Proxy] Backend response:', { status: data.status, code: data.code });
 
     // If login successful, set cookies
     if (backendResponse.ok && data.data?.token) {
@@ -48,9 +55,15 @@ export async function POST(request) {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error('Login bypass proxy error:', error);
+    console.error('[Login Proxy] Error:', error);
+    console.error('[Login Proxy] Error details:', error.message, error.cause);
     return NextResponse.json(
-      { status: 'error', message: 'Failed to login', code: 'PROXY_ERROR' },
+      { 
+        status: 'error', 
+        message: error.message || 'Failed to login', 
+        code: 'PROXY_ERROR',
+        details: error.cause ? error.cause.message : 'Backend connection failed'
+      },
       { status: 500 }
     );
   }

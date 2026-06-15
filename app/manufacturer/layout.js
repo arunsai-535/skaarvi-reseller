@@ -1,27 +1,44 @@
 'use client';
 
-import { useAdminAuth } from '@/lib/adminAuth';
 import { useRouter, usePathname } from 'next/navigation';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
-import { LayoutDashboard, Users, Package, LogOut, Menu, X, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  DollarSign, 
+  BarChart3, 
+  Warehouse,
+  FileText,
+  Banknote,
+  LogOut, 
+  Menu, 
+  X 
+} from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 
-export default function AdminLayout({ children }) {
-  const { user } = useAdminAuth();
+export default function ManufacturerLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { theme } = useTheme();
+  const { user } = useSelector(state => state.auth);
+
+  useEffect(() => {
+    // Redirect if not manufacturer
+    if (user && user.role !== 'manufacturer') {
+      router.push('/login/manufacturer');
+    }
+  }, [user, router]);
 
   const handleLogout = async () => {
     try {
-      // Call logout API to clear cookies
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
       console.error('Logout error:', error);
@@ -31,17 +48,21 @@ export default function AdminLayout({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     toast.success('Logged out successfully');
-    router.push('/login');
+    router.push('/login/manufacturer');
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Manufacturers', href: '/admin/manufacturers', icon: Users },
-    { name: 'Products', href: '/admin/products', icon: Package },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Dashboard', href: '/manufacturer/dashboard', icon: LayoutDashboard },
+    { name: 'Products', href: '/manufacturer/products', icon: Package },
+    { name: 'Inventory', href: '/manufacturer/inventory', icon: Warehouse },
+    { name: 'Orders', href: '/manufacturer/orders', icon: ShoppingCart },
+    { name: 'Analytics', href: '/manufacturer/analytics', icon: BarChart3 },
+    { name: 'Earnings', href: '/manufacturer/earnings', icon: DollarSign },
+    { name: 'Settlements', href: '/manufacturer/settlements', icon: Banknote },
+    { name: 'Reports', href: '/manufacturer/reports', icon: FileText },
   ];
 
-  if (!user) return null; // Wait for auth check
+  if (!user) return null;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
@@ -58,7 +79,7 @@ export default function AdminLayout({ children }) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6" style={{ borderBottom: '1px solid rgb(var(--color-border))' }}>
-            <h1 className="text-xl font-bold" style={{ color: 'rgb(var(--color-primary))' }}>Skaarvi Admin</h1>
+            <h1 className="text-xl font-bold" style={{ color: 'rgb(var(--color-primary))' }}>Skaarvi</h1>
             <button
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden hover:opacity-70 transition-opacity"
@@ -109,11 +130,11 @@ export default function AdminLayout({ children }) {
           <div className="p-4" style={{ borderTop: '1px solid rgb(var(--color-border))' }}>
             <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold" style={{ backgroundColor: 'rgb(var(--color-primary))' }}>
-                {user.email?.[0]?.toUpperCase() || 'A'}
+                {user.email?.[0]?.toUpperCase() || 'M'}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text))' }}>{user.email}</p>
-                <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>Administrator</p>
+                <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>Manufacturer</p>
               </div>
             </div>
             <button

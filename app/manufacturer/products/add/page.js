@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import api from '@/lib/api';
 import { ChevronDown, ChevronUp, Plus, X, Upload, FileText, Video, Image as ImageIcon } from 'lucide-react';
@@ -28,7 +28,9 @@ const Section = ({ title, name, isOpen, onToggle, children }) => (
 
 export default function AddProductPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
+  const editProductId = searchParams.get('id'); // Get product ID from URL for edit mode
 
   // Collapsible sections state
   const [openSections, setOpenSections] = useState({
@@ -81,6 +83,13 @@ export default function AddProductPage() {
     fetchCategories();
   }, []);
 
+  // Load product data for editing
+  useEffect(() => {
+    if (editProductId) {
+      loadProductForEdit(editProductId);
+    }
+  }, [editProductId]);
+
   // Auto-save functionality
   useEffect(() => {
     if (!productId) return; // Only auto-save after initial creation
@@ -91,6 +100,64 @@ export default function AddProductPage() {
 
     return () => clearInterval(autoSaveInterval);
   }, [formData, productId]);
+
+  const loadProductForEdit = async (id) => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/api/products/${id}`);
+      const productData = response.data.data.product || response.data.data;
+
+      // Convert specifications from object to array format
+      let specificationsArray = [];
+      if (productData.specifications) {
+        if (Array.isArray(productData.specifications)) {
+          specificationsArray = productData.specifications;
+        } else if (typeof productData.specifications === 'object') {
+          // Convert object {Color: 'Red', Size: 'Large'} to array [{key: 'Color', value: 'Red'}, ...]
+          specificationsArray = Object.entries(productData.specifications).map(([key, value]) => ({ key, value }));
+        }
+      }
+
+      // Set form data from loaded product
+      setFormData({
+        name: productData.name || '',
+        categoryId: productData.categoryId || '',
+        brandName: productData.brandName || '',
+        sku: productData.sku || '',
+        description: productData.description || '',
+        specifications: specificationsArray,
+        costPrice: productData.costPrice || '',
+        stockQuantity: productData.stockQuantity || '',
+        lowStockThreshold: productData.lowStockThreshold || 10,
+        weight: productData.weight || '',
+        dimensions: productData.dimensions || { length: '', width: '', height: '' },
+        deliveryDays: productData.deliveryDays || '',
+        shippingCharges: productData.shippingCharges || '',
+        shippingInfo: productData.shippingInfo || '',
+        status: productData.status || 'draft',
+      });
+
+      // Set product ID for update mode
+      setProductId(id);
+
+      // Load existing images
+      if (productData.images && productData.images.length > 0) {
+        const existingImages = productData.images.map(img => img.imageUrl);
+        setImagePreviews(existingImages);
+      }
+
+      // Load existing videos
+      if (productData.videos && productData.videos.length > 0) {
+        const existingVideos = productData.videos.map(vid => vid.videoUrl);
+        setVideoPreviews(existingVideos);
+      }
+    } catch (error) {
+      console.error('Failed to load product:', error);
+      setError('Failed to load product for editing');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -347,9 +414,11 @@ export default function AddProductPage() {
 
   return (
     <div className="min-h-screen py-8" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Add New Product</h1>
+          <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+            {editProductId ? 'Edit Product' : 'Add New Product'}
+          </h1>
           <p className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             Fill in the product details below. Changes are auto-saved every 30 seconds.
           </p>
@@ -477,7 +546,7 @@ export default function AddProductPage() {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {formData.specifications.map((spec, index) => (
+                  {Array.isArray(formData.specifications) && formData.specifications.map((spec, index) => (
                     <div key={index} className="flex gap-2">
                       <input
                         type="text"
@@ -593,21 +662,31 @@ export default function AddProductPage() {
 
                 {videoPreviews.length > 0 && (
                   <div className="mt-4 space-y-2">
-                    {videoPreviews.map((name, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-                        <div className="flex items-center gap-2">
-                          <Video size={20} style={{ color: 'rgb(var(--color-text-secondary))' }} />
-                          <span className="text-sm">{name}</span>
+                    {videoPreviews.map((videoItem, index) => {
+                      const isUrl = typeof videoItem === 'string' && videoItem.startsWith('http');
+                      return (
+                        <div key={index} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+                          {isUrl ? (
+                            <div className="flex items-center gap-2 flex-1">
+                              <video src={videoItem} className="w-32 h-20 object-cover rounded" />
+                              <span className="text-sm">Video {index + 1}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Video size={20} style={{ color: 'rgb(var(--color-text-secondary))' }} />
+                              <span className="text-sm">{videoItem}</span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeVideo(index)}
+                            className="p-1 text-red-600 hover:text-red-700"
+                          >
+                            <X size={18} />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeVideo(index)}
-                          className="p-1 text-red-600 hover:text-red-700"
-                        >
-                          <X size={18} />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

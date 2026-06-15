@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useDispatch } from 'react-redux';
-import { logout } from '@/store/slices/authSlice';
 import { 
   Package, 
   ShoppingCart, 
@@ -13,17 +11,13 @@ import {
   Clock,
   Wallet,
   Loader2,
-  LogOut,
-  BarChart3,
   AlertTriangle
 } from 'lucide-react';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'react-hot-toast';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -41,21 +35,6 @@ export default function DashboardPage() {
     fetchDashboardData();
     fetchLowStockProducts();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      // Call logout API to clear cookies
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    
-    dispatch(logout());
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    toast.success('Logged out successfully');
-    router.push('/login');
-  };
 
   const fetchDashboardData = async () => {
     try {
@@ -198,7 +177,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: 'rgb(var(--color-primary))' }} />
           <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Loading dashboard...</p>
@@ -208,70 +187,27 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen transition-colors duration-200" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-      {/* Simple Header */}
-      <header className="border-b sticky top-0 z-10 transition-colors" style={{ 
-        backgroundColor: 'rgb(var(--color-background))',
-        borderColor: 'rgb(var(--color-border))'
-      }}>
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Dashboard</h1>
-              <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Welcome back! Here's your overview</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeSwitcher />
-              <NotificationBell />
-              <button 
-                onClick={() => router.push('/manufacturer/inventory')}
-                className="btn btn-outline btn-sm flex items-center gap-2"
-              >
-                <Package className="w-4 h-4" />
-                Inventory
-              </button>
-              <button 
-                onClick={() => router.push('/manufacturer/earnings')}
-                className="btn btn-outline btn-sm flex items-center gap-2"
-              >
-                <DollarSign className="w-4 h-4" />
-                Earnings
-              </button>
-              <button 
-                onClick={() => router.push('/manufacturer/settlements')}
-                className="btn btn-outline btn-sm flex items-center gap-2"
-              >
-                <Wallet className="w-4 h-4" />
-                Settlements
-              </button>
-              <button 
-                onClick={() => router.push('/manufacturer/reports')}
-                className="btn btn-outline btn-sm flex items-center gap-2"
-              >
-                <BarChart3 className="w-4 h-4" />
-                Reports
-              </button>
-              <button 
-                onClick={() => router.push('/manufacturer/products/add')}
-                className="btn btn-primary btn-sm"
-              >
-                Add Product
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="btn btn-outline btn-sm flex items-center gap-2"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
-          </div>
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Dashboard</h1>
+          <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Welcome back! Here's your overview</p>
         </div>
-      </header>
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <button 
+            onClick={() => router.push('/manufacturer/products/add')}
+            className="btn btn-primary"
+          >
+            <Package className="w-4 h-4" />
+            Add Product
+          </button>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <main className="p-6 space-y-6">
+      <div className="space-y-6">
         {/* Stats Grid - 7 cards in responsive layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {statsCards.map((stat) => {
@@ -282,15 +218,15 @@ export default function DashboardPage() {
                 className="card hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                  <div className="flex-1">
+                    <p className="text-sm mb-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>{stat.title}</p>
+                    <h3 className="text-2xl font-bold mb-1" style={{ color: 'rgb(var(--color-text))' }}>
                       {stat.value}
                     </h3>
-                    <p className="text-xs text-gray-500">{stat.subtitle}</p>
+                    <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>{stat.subtitle}</p>
                   </div>
-                  <div className={`p-3 bg-${stat.color}-100 rounded-lg`}>
-                    <Icon className={`w-6 h-6 text-${stat.color}-600`} />
+                  <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(var(--color-primary), 0.1)' }}>
+                    <Icon className="w-6 h-6" style={{ color: 'rgb(var(--color-primary))' }} />
                   </div>
                 </div>
               </div>
@@ -300,15 +236,15 @@ export default function DashboardPage() {
 
         {/* Low Stock Alerts */}
         {lowStockProducts.length > 0 && (
-          <div className="card border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
+          <div className="card border-l-4 border-yellow-500" style={{ backgroundColor: 'rgba(234, 179, 8, 0.1)' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-6 h-6 text-yellow-600" />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
                     Low Stock Alert
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     {lowStockProducts.length} product{lowStockProducts.length > 1 ? 's' : ''} running low
                   </p>
                 </div>
@@ -324,7 +260,8 @@ export default function DashboardPage() {
               {lowStockProducts.map((product) => (
                 <div 
                   key={product.id}
-                  className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                  className="flex items-center justify-between p-3 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                  style={{ backgroundColor: 'rgb(var(--color-background))' }}
                   onClick={() => router.push('/manufacturer/inventory')}
                 >
                   <div className="flex items-center gap-3">
@@ -336,8 +273,8 @@ export default function DashboardPage() {
                       />
                     )}
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{product.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>{product.name}</p>
+                      <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         SKU: {product.sku || 'N/A'}
                       </p>
                     </div>
@@ -346,7 +283,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-semibold text-red-600">
                       {product.availableStock} / {product.low_stock_threshold}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Available / Threshold
                     </p>
                   </div>
@@ -356,17 +293,17 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* 
         {/* Recent Orders */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
-              <p className="text-sm text-gray-600">Latest orders from resellers</p>
+              <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text))' }}>Recent Orders</h2>
+              <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Latest orders from resellers</p>
             </div>
             <button 
               onClick={() => router.push('/manufacturer/orders')}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              className="text-sm font-medium hover:opacity-80 transition-opacity"
+              style={{ color: 'rgb(var(--color-primary))' }}
             >
               View All
             </button>
@@ -415,7 +352,7 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

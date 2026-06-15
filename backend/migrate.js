@@ -46,11 +46,27 @@ async function runMigration() {
       }
     }
 
+    // Migration 3: Analytics tables
+    console.log('📊 Creating Analytics tables...');
+    try {
+      const analyticsSqlPath = path.join(__dirname, 'migrations/create-analytics-tables.sql');
+      const analyticsSql = fs.readFileSync(analyticsSqlPath, 'utf8');
+      await connection.query(analyticsSql);
+      console.log('✅ Analytics tables migration completed\n');
+    } catch (error) {
+      if (error.code === 'ER_TABLE_EXISTS_ERROR') {
+        console.log('⚠️  Analytics tables already exist - skipping\n');
+      } else {
+        console.error('❌ Analytics migration error:', error.message, '\n');
+      }
+    }
+
     console.log('🎉 All migrations completed successfully!\n');
     console.log('📊 Summary:');
     console.log('  Products table - Added: brand_name, catalog_url, shipping_charges');
     console.log('  Manufacturers table - Added: brand_name, business_type, pan_number,');
     console.log('                                bank_name, document URLs (GST, PAN, Cheque)');
+    console.log('  Analytics tables - Created: product_saves, product_shares, product_clicks');
     
   } catch (error) {
     console.error('❌ Migration failed:', error.message);

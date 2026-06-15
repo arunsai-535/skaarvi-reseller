@@ -55,21 +55,31 @@ export default function ProductSaveButton({
     setLoading(true);
     try {
       const method = isSaved ? 'DELETE' : 'POST';
-      const body = !isSaved ? JSON.stringify({
-        source,
-        deviceType: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
-      }) : undefined;
-
-      const response = await fetch(`/api/analytics/products/${productId}/save`, {
+      const options = {
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        ...(body && { body }),
-      });
+      };
 
-      const result = await response.json();
+      // Add body only for POST requests
+      if (!isSaved) {
+        options.body = JSON.stringify({
+          source,
+          deviceType: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        });
+      }
+
+      const response = await fetch(`/api/analytics/products/${productId}/save`, options);
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        result = { status: 'error', message: 'Invalid server response' };
+      }
 
       if (response.ok && result.status === 'success') {
         const newSavedState = !isSaved;
@@ -85,7 +95,7 @@ export default function ProductSaveButton({
           onSaveChange(newSavedState);
         }
       } else {
-        throw new Error(result.message || 'Failed to update save status');
+        throw new Error(result.message || `Failed to ${isSaved ? 'remove from' : 'save to'} wishlist`);
       }
     } catch (error) {
       console.error('Toggle save error:', error);

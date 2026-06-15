@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSalesReport, fetchProductReport, fetchResellerDemandReport } from '@/store/slices/reportsSlice';
-import { ArrowLeft, BarChart3, TrendingUp, Users, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Loader2 } from 'lucide-react';
 
 export default function ReportsPage() {
   const router = useRouter();
@@ -34,22 +34,14 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => router.push('/manufacturer/dashboard')}
-            className="flex items-center mb-4 transition-colors hover:opacity-70"
-            style={{ color: 'rgb(var(--color-primary))' }}
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </button>
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
             Analytics & Reports
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
             Insights into your sales, products, and reseller engagement
           </p>
         </div>

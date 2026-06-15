@@ -16,6 +16,7 @@ import OrderStatusBadge from '@/components/manufacturer/orders/OrderStatusBadge'
 import OrderTimeline from '@/components/manufacturer/orders/OrderTimeline';
 import ShippingDetailsModal from '@/components/manufacturer/orders/ShippingDetailsModal';
 import { formatOrderDate, formatAddress, formatCurrency, getAvailableActions, ORDER_STATUS } from '@/lib/orderUtils';
+import ConfirmModal from '@/components/ConfirmModal';
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -24,6 +25,15 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showShippingModal, setShowShippingModal] = useState(false);
+  
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'warning',
+    title: '',
+    message: '',
+    onConfirm: null
+  });
 
   useEffect(() => {
     fetchOrderDetails();
@@ -53,29 +63,36 @@ export default function OrderDetailPage() {
   };
 
   const handleAcceptOrder = async () => {
-    if (!confirm('Are you sure you want to accept this order?')) return;
+    setConfirmModal({
+      isOpen: true,
+      type: 'info',
+      title: 'Accept Order',
+      message: 'Are you sure you want to accept this order? You will be responsible for fulfilling it.',
+      onConfirm: async () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        try {
+          setActionLoading(true);
+          const response = await fetch(`/api/orders/${params.id}/accept`, {
+            method: 'POST',
+            credentials: 'include'
+          });
 
-    try {
-      setActionLoading(true);
-      const response = await fetch(`/api/orders/${params.id}/accept`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+          const data = await response.json();
 
-      const data = await response.json();
-
-      if (data.status === 'success') {
-        toast.success('Order accepted successfully!');
-        fetchOrderDetails();
-      } else {
-        throw new Error(data.message);
+          if (data.status === 'success') {
+            toast.success('Order accepted successfully!');
+            fetchOrderDetails();
+          } else {
+            throw new Error(data.message);
+          }
+        } catch (error) {
+          console.error('Accept order error:', error);
+          toast.error(error.message || 'Failed to accept order');
+        } finally {
+          setActionLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('Accept order error:', error);
-      toast.error(error.message || 'Failed to accept order');
-    } finally {
-      setActionLoading(false);
-    }
+    });
   };
 
   const handleUpdateToProcessing = async () => {
@@ -108,26 +125,41 @@ export default function OrderDetailPage() {
   };
 
   const handleMarkDelivered = async () => {
-    if (!confirm('Mark this order as delivered?')) return;
+    setConfirmModal({
+      isOpen: true,
+      type: 'success',
+      title: 'Mark as Delivered',
+      message: 'Confirm that this order has been successfully delivered to the customer?',
+      onConfirm: async () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        try {
+          setActionLoading(true);
+          const response = await fetch(`/api/orders/${params.id}/deliver`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              notes: 'Order delivered successfully'
+            })
+          });
 
-    try {
-      setActionLoading(true);
-      const response = await fetch(`/api/orders/${params.id}/deliver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          notes: 'Order delivered successfully'
-        })
-      });
+          const data = await response.json();
 
-      const data = await response.json();
-
-      if (data.status === 'success') {
-        toast.success('Order marked as delivered!');
-        fetchOrderDetails();
-      } else {
-        throw new Error(data.message);
+          if (data.status === 'success') {
+            toast.success('Order marked as delivered!');
+            fetchOrderDetails();
+          } else {
+            throw new Error(data.message);
+          }
+        } catch (error) {
+          console.error('Mark delivered error:', error);
+          toast.error(error.message || 'Failed to mark order as delivered');
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    });
+  };
       }
     } catch (error) {
       console.error('Deliver order error:', error);
@@ -398,6 +430,18 @@ export default function OrderDetailPage() {
           }}
         />
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText={confirmModal.type === 'success' ? 'Mark Delivered' : 'Accept'}
+        cancelText="Cancel"
+      />
     </div>
   );
 }
