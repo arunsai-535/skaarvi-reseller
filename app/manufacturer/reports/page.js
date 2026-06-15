@@ -34,18 +34,19 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-screen p-6" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.push('/manufacturer/dashboard')}
-            className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mb-4 transition-colors"
+            className="flex items-center mb-4 transition-colors hover:opacity-70"
+            style={{ color: 'rgb(var(--color-primary))' }}
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Dashboard
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
             Analytics & Reports
           </h1>
           <p className="text-gray-600 dark:text-gray-400">

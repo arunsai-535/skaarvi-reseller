@@ -100,7 +100,7 @@ export default function ManufacturersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'rgb(var(--color-primary))' }}></div>
       </div>
     );
   }
@@ -109,21 +109,21 @@ export default function ManufacturersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Manufacturers</h1>
-        <p className="text-gray-600 mt-2">Manage and review manufacturer applications</p>
+        <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Manufacturers</h1>
+        <p className="mt-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Manage and review manufacturer applications</p>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="card p-6">
         {/* Search Bar */}
         <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
           <input
             type="text"
             placeholder="Search by company name, brand, or contact person..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="input w-full pl-12"
           />
         </div>
 
@@ -133,11 +133,14 @@ export default function ManufacturersPage() {
             <button
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeFilter === filter.id
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className="px-4 py-2 rounded-lg font-medium transition-all"
+              style={activeFilter === filter.id ? {
+                backgroundColor: 'rgb(var(--color-primary))',
+                color: 'white'
+              } : {
+                backgroundColor: 'rgb(var(--color-surface))',
+                color: 'rgb(var(--color-text))'
+              }}
             >
               {filter.label}
               <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-white bg-opacity-20">
@@ -150,17 +153,17 @@ export default function ManufacturersPage() {
 
       {/* Results */}
       <div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
           Showing {filteredManufacturers.length} manufacturer{filteredManufacturers.length !== 1 ? 's' : ''}
         </p>
 
         {filteredManufacturers.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <Filter className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="card p-12 text-center">
+            <Filter className="w-12 h-12 mx-auto mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
               No manufacturers found
             </h3>
-            <p className="text-gray-600">
+            <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
               {searchQuery
                 ? 'Try adjusting your search query'
                 : 'No manufacturers match the selected filter'}

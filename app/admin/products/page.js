@@ -173,18 +173,18 @@ export default function AdminProductsPage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Product Management</h1>
+        <p className="mt-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
           Manage product pricing margins and approvals across the platform.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="mb-6 card p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
             <input
               type="text"
               placeholder="Search products..."
@@ -193,7 +193,7 @@ export default function AdminProductsPage() {
                 setSearchTerm(e.target.value);
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="input w-full pl-10"
             />
           </div>
 
@@ -204,7 +204,7 @@ export default function AdminProductsPage() {
               setStatusFilter(e.target.value);
               setPagination(prev => ({ ...prev, currentPage: 1 }));
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            className="input"
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
@@ -217,55 +217,58 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Products Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead style={{ backgroundColor: 'rgb(var(--color-surface))', borderBottom: '1px solid rgb(var(--color-border))' }}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Product
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Manufacturer
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Cost Price
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Skaarvi %
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Reseller %
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Selling Price
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Status
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="8" className="px-6 py-12 text-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'rgb(var(--color-primary))' }}></div>
                     </div>
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="8" className="px-6 py-12 text-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     No products found
                   </td>
                 </tr>
               ) : (
                 products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
+                  <tr key={product.id} className="transition-colors" style={{ borderTop: '1px solid rgb(var(--color-border))' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {product.ProductImages?.[0] && (
@@ -276,24 +279,24 @@ export default function AdminProductsPage() {
                           />
                         )}
                         <div>
-                          <div className="font-medium text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-500">{product.sku || 'No SKU'}</div>
+                          <div className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>{product.name}</div>
+                          <div className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{product.sku || 'No SKU'}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                       {product.Manufacturer?.businessName || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-right font-medium text-gray-900">
+                    <td className="px-6 py-4 text-right font-medium" style={{ color: 'rgb(var(--color-text))' }}>
                       {formatCurrency(product.costPrice)}
                     </td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-900">
+                    <td className="px-6 py-4 text-center text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                       {product.skaarviMargin}%
                     </td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-900">
+                    <td className="px-6 py-4 text-center text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                       {product.resellerMargin}%
                     </td>
-                    <td className="px-6 py-4 text-right font-semibold text-primary-600">
+                    <td className="px-6 py-4 text-right font-semibold" style={{ color: 'rgb(var(--color-primary))' }}>
                       {formatCurrency(product.sellingPrice)}
                     </td>
                     <td className="px-6 py-4 text-center">

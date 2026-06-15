@@ -112,7 +112,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'rgb(var(--color-primary))' }}></div>
       </div>
     );
   }
@@ -121,8 +121,8 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Overview of manufacturer registrations and approvals</p>
+        <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Admin Dashboard</h1>
+        <p className="mt-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Overview of manufacturer registrations and approvals</p>
       </div>
 
       {/* Statistics Cards */}
@@ -130,11 +130,11 @@ export default function AdminDashboard() {
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.title} className="bg-white rounded-lg border border-gray-200 p-6">
+            <div key={stat.title} className="card p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                  <p className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{stat.title}</p>
+                  <p className="text-3xl font-bold mt-2" style={{ color: 'rgb(var(--color-text))' }}>{stat.value}</p>
                 </div>
                 <div className={`p-3 rounded-lg ${stat.iconBg}`}>
                   <Icon className={`w-6 h-6 ${stat.iconColor}`} />
@@ -147,19 +147,22 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       {stats.pending > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="rounded-lg p-4" style={{ 
+          backgroundColor: 'rgba(var(--color-warning), 0.1)',
+          border: '1px solid rgb(var(--color-warning))'
+        }}>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-yellow-900">
+              <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-warning))' }}>
                 {stats.pending} Pending Approval{stats.pending > 1 ? 's' : ''}
               </h3>
-              <p className="text-yellow-700 text-sm mt-1">
+              <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                 Review and approve manufacturer applications
               </p>
             </div>
             <button
               onClick={() => router.push('/admin/manufacturers?filter=pending')}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors"
+              className="btn btn-primary"
             >
               View Pending
             </button>
@@ -168,31 +171,34 @@ export default function AdminDashboard() {
       )}
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Registrations</h2>
+      <div className="card">
+        <div className="px-6 py-4" style={{ borderBottom: '1px solid rgb(var(--color-border))' }}>
+          <h2 className="text-xl font-semibold" style={{ color: 'rgb(var(--color-text))' }}>Recent Registrations</h2>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div style={{ borderTop: 'none' }}>
           {recentManufacturers.length === 0 ? (
-            <div className="px-6 py-8 text-center text-gray-500">
+            <div className="px-6 py-8 text-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               No manufacturers registered yet
             </div>
           ) : (
             recentManufacturers.map((manufacturer) => (
               <div
                 key={manufacturer.id}
-                className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                className="px-6 py-4 cursor-pointer transition-colors"
+                style={{ borderTop: '1px solid rgb(var(--color-border))' }}
                 onClick={() => router.push(`/admin/manufacturers/${manufacturer.id}`)}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="text-base font-semibold text-gray-900">
+                    <h3 className="text-base font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
                       {manufacturer.companyName}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Brand: {manufacturer.brandName} • Contact: {manufacturer.contactPerson}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       {new Date(manufacturer.createdAt).toLocaleString('en-US', {
                         year: 'numeric',
                         month: 'short',
@@ -209,10 +215,14 @@ export default function AdminDashboard() {
           )}
         </div>
         {recentManufacturers.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="px-6 py-4" style={{ 
+            borderTop: '1px solid rgb(var(--color-border))',
+            backgroundColor: 'rgb(var(--color-surface))'
+          }}>
             <button
               onClick={() => router.push('/admin/manufacturers')}
-              className="text-primary-600 hover:text-primary-700 font-medium text-sm"
+              className="font-medium text-sm transition-opacity hover:opacity-70"
+              style={{ color: 'rgb(var(--color-primary))' }}
             >
               View All Manufacturers →
             </button>

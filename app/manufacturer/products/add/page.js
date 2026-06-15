@@ -8,13 +8,14 @@ import { ChevronDown, ChevronUp, Plus, X, Upload, FileText, Video, Image as Imag
 
 // Section component moved outside to prevent re-creation on every render
 const Section = ({ title, name, isOpen, onToggle, children }) => (
-  <div className="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+  <div className="border rounded-lg mb-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
     <button
       type="button"
       onClick={() => onToggle(name)}
-      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+      className="w-full flex items-center justify-between p-4 rounded-t-lg transition-colors hover:opacity-90"
+      style={{ backgroundColor: 'rgb(var(--color-surface))' }}
     >
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text))' }}>{title}</h2>
       {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
     </button>
     {isOpen && (
@@ -345,33 +346,33 @@ export default function AddProductPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen py-8" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Add New Product</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Add New Product</h1>
+          <p className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             Fill in the product details below. Changes are auto-saved every 30 seconds.
           </p>
           {lastSaved && (
-            <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+            <p className="mt-1 text-xs" style={{ color: 'rgb(var(--color-success))' }}>
               Last saved: {lastSaved.toLocaleTimeString()}
             </p>
           )}
           {autoSaving && (
-            <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+            <p className="mt-1 text-xs" style={{ color: 'rgb(var(--color-primary))' }}>
               Saving...
             </p>
           )}
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-200">
+          <div className="mb-4 p-4 border rounded-lg" style={{ backgroundColor: 'rgba(var(--color-danger), 0.1)', borderColor: 'rgb(var(--color-danger))', color: 'rgb(var(--color-danger))' }}>
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-200">
+          <div className="mb-4 p-4 border rounded-lg" style={{ backgroundColor: 'rgba(var(--color-success), 0.1)', borderColor: 'rgb(var(--color-success))', color: 'rgb(var(--color-success))' }}>
             {success}
           </div>
         )}
@@ -381,7 +382,7 @@ export default function AddProductPage() {
           <Section title="Product Information" name="productInfo" isOpen={openSections.productInfo} onToggle={toggleSection}>
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                   Product Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -389,7 +390,7 @@ export default function AddProductPage() {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className="input"
                   placeholder="Enter product name"
                   required
                 />
@@ -397,14 +398,14 @@ export default function AddProductPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                     Category <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="categoryId"
                     value={formData.categoryId}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     required
                   >
                     <option value="">Select Category</option>
@@ -415,20 +416,20 @@ export default function AddProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Brand Name</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Brand Name</label>
                   <input
                     type="text"
                     name="brandName"
                     value={formData.brandName}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="Enter brand name"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">SKU Code</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>SKU Code</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -436,40 +437,41 @@ export default function AddProductPage() {
                     value={formData.sku}
                     onChange={handleInputChange}
                     onBlur={checkSkuAvailability}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="Enter SKU code"
                   />
                   {skuChecking && (
-                    <span className="absolute right-3 top-3 text-sm text-gray-500">Checking...</span>
+                    <span className="absolute right-3 top-3 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Checking...</span>
                   )}
                   {skuAvailable === true && (
-                    <span className="absolute right-3 top-3 text-sm text-green-600">✓ Available</span>
+                    <span className="absolute right-3 top-3 text-sm" style={{ color: 'rgb(var(--color-success))' }}>✓ Available</span>
                   )}
                   {skuAvailable === false && (
-                    <span className="absolute right-3 top-3 text-sm text-red-600">✗ Already taken</span>
+                    <span className="absolute right-3 top-3 text-sm" style={{ color: 'rgb(var(--color-danger))' }}>✗ Already taken</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Product Description</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Product Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className="input"
                   placeholder="Describe your product..."
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium">Product Specifications</label>
+                  <label className="block text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>Product Specifications</label>
                   <button
                     type="button"
                     onClick={addSpecification}
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                    className="flex items-center gap-1 text-sm transition-colors hover:opacity-70"
+                    style={{ color: 'rgb(var(--color-primary))' }}
                   >
                     <Plus size={16} /> Add Specification
                   </button>
@@ -482,19 +484,20 @@ export default function AddProductPage() {
                         value={spec.key}
                         onChange={(e) => updateSpecification(index, 'key', e.target.value)}
                         placeholder="Key (e.g., Color)"
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 input"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={(e) => updateSpecification(index, 'value', e.target.value)}
                         placeholder="Value (e.g., Red)"
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 input"
                       />
                       <button
                         type="button"
                         onClick={() => removeSpecification(index)}
-                        className="p-2 text-red-600 hover:text-red-700 dark:text-red-400"
+                        className="p-2 transition-colors hover:opacity-70"
+                        style={{ color: 'rgb(var(--color-danger))' }}
                       >
                         <X size={20} />
                       </button>
@@ -510,10 +513,10 @@ export default function AddProductPage() {
             <div className="space-y-6">
               {/* Images */}
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                   Product Images (Max 10)
                 </label>
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                <div className="border-2 border-dashed rounded-lg p-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
                   <input
                     type="file"
                     accept="image/*"
@@ -526,11 +529,11 @@ export default function AddProductPage() {
                     htmlFor="image-upload"
                     className="flex flex-col items-center justify-center cursor-pointer"
                   >
-                    <ImageIcon size={48} className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <ImageIcon size={48} className="mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+                    <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Click to upload images (JPEG, PNG, WEBP, GIF)
                     </span>
-                    <span className="text-xs text-gray-500 mt-1">Max 5MB per image</span>
+                    <span className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Max 5MB per image</span>
                   </label>
                 </div>
 
@@ -546,12 +549,13 @@ export default function AddProductPage() {
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ backgroundColor: 'rgb(var(--color-danger))', color: 'white' }}
                         >
                           <X size={14} />
                         </button>
                         {index === 0 && (
-                          <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded">
+                          <span className="absolute bottom-1 left-1 px-2 py-0.5 text-xs rounded" style={{ backgroundColor: 'rgb(var(--color-primary))', color: 'white' }}>
                             Primary
                           </span>
                         )}
@@ -563,10 +567,10 @@ export default function AddProductPage() {
 
               {/* Videos */}
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                   Product Videos (Max 3)
                 </label>
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                <div className="border-2 border-dashed rounded-lg p-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
                   <input
                     type="file"
                     accept="video/*"
@@ -579,20 +583,20 @@ export default function AddProductPage() {
                     htmlFor="video-upload"
                     className="flex flex-col items-center justify-center cursor-pointer"
                   >
-                    <Video size={48} className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <Video size={48} className="mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+                    <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Click to upload videos (MP4, MOV, AVI)
                     </span>
-                    <span className="text-xs text-gray-500 mt-1">Max 50MB per video</span>
+                    <span className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Max 50MB per video</span>
                   </label>
                 </div>
 
                 {videoPreviews.length > 0 && (
                   <div className="mt-4 space-y-2">
                     {videoPreviews.map((name, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
                         <div className="flex items-center gap-2">
-                          <Video size={20} className="text-gray-600 dark:text-gray-400" />
+                          <Video size={20} style={{ color: 'rgb(var(--color-text-secondary))' }} />
                           <span className="text-sm">{name}</span>
                         </div>
                         <button
@@ -610,10 +614,10 @@ export default function AddProductPage() {
 
               {/* Catalog PDF */}
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                   Product Catalog (PDF)
                 </label>
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                <div className="border-2 border-dashed rounded-lg p-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
                   <input
                     type="file"
                     accept=".pdf"
@@ -625,18 +629,18 @@ export default function AddProductPage() {
                     htmlFor="catalog-upload"
                     className="flex flex-col items-center justify-center cursor-pointer"
                   >
-                    <FileText size={48} className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <FileText size={48} className="mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+                    <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Click to upload catalog PDF
                     </span>
-                    <span className="text-xs text-gray-500 mt-1">Max 10MB</span>
+                    <span className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Max 10MB</span>
                   </label>
                 </div>
 
                 {catalog && (
-                  <div className="mt-4 flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <div className="mt-4 flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
                     <div className="flex items-center gap-2">
-                      <FileText size={20} className="text-red-600" />
+                      <FileText size={20} style={{ color: 'rgb(var(--color-danger))' }} />
                       <span className="text-sm">{catalog.name}</span>
                     </div>
                     <button
@@ -657,7 +661,7 @@ export default function AddProductPage() {
             <div className="grid grid-cols-1 gap-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                     Manufacturer Price (₹) <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -667,29 +671,29 @@ export default function AddProductPage() {
                     onChange={handleInputChange}
                     step="0.01"
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="0.00"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-500">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     Final Selling Price (Calculated)
                   </label>
                   <input
                     type="text"
                     value={formData.costPrice ? `₹${(parseFloat(formData.costPrice) * 1.15).toFixed(2)}` : '₹0.00'}
                     readOnly
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white cursor-not-allowed"
+                    className="input cursor-not-allowed opacity-60"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Includes 5% Skaarvi + 10% Reseller margin</p>
+                  <p className="text-xs  mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Includes 5% Skaarvi + 10% Reseller margin</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                     Stock Quantity <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -698,14 +702,14 @@ export default function AddProductPage() {
                     value={formData.stockQuantity}
                     onChange={handleInputChange}
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="0"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                     Low Stock Alert Level
                   </label>
                   <input
@@ -714,7 +718,7 @@ export default function AddProductPage() {
                     value={formData.lowStockThreshold}
                     onChange={handleInputChange}
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="10"
                   />
                 </div>
@@ -727,7 +731,7 @@ export default function AddProductPage() {
             <div className="grid grid-cols-1 gap-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Weight (kg)</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Weight (kg)</label>
                   <input
                     type="number"
                     name="weight"
@@ -735,27 +739,27 @@ export default function AddProductPage() {
                     onChange={handleInputChange}
                     step="0.01"
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Delivery Time (days)</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Delivery Time (days)</label>
                   <input
                     type="number"
                     name="deliveryDays"
                     value={formData.deliveryDays}
                     onChange={handleInputChange}
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="7"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Dimensions (cm)</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Dimensions (cm)</label>
                 <div className="grid grid-cols-3 gap-4">
                   <input
                     type="number"
@@ -764,7 +768,7 @@ export default function AddProductPage() {
                     step="0.01"
                     min="0"
                     placeholder="Length"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                   />
                   <input
                     type="number"
@@ -773,7 +777,7 @@ export default function AddProductPage() {
                     step="0.01"
                     min="0"
                     placeholder="Width"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                   />
                   <input
                     type="number"
@@ -782,13 +786,13 @@ export default function AddProductPage() {
                     step="0.01"
                     min="0"
                     placeholder="Height"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="input"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Shipping Charges (₹)</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Shipping Charges (₹)</label>
                 <input
                   type="number"
                   name="shippingCharges"
@@ -796,19 +800,19 @@ export default function AddProductPage() {
                   onChange={handleInputChange}
                   step="0.01"
                   min="0"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className="input"
                   placeholder="0.00"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Shipping Information</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Shipping Information</label>
                 <textarea
                   name="shippingInfo"
                   value={formData.shippingInfo}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className="input"
                   placeholder="Additional shipping details..."
                 />
               </div>
@@ -816,11 +820,11 @@ export default function AddProductPage() {
           </Section>
 
           {/* Action Buttons */}
-          <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 flex gap-4 justify-end">
+          <div className="sticky bottom-0 border-t p-4 flex gap-4 justify-end" style={{ backgroundColor: 'rgb(var(--color-background))', borderColor: 'rgb(var(--color-border))' }}>
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+              className="btn btn-outline"
             >
               Cancel
             </button>
@@ -828,7 +832,7 @@ export default function AddProductPage() {
               type="button"
               onClick={() => handleSubmit(false, false)}
               disabled={loading}
-              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-secondary"
             >
               {loading ? 'Saving...' : 'Save Draft'}
             </button>
@@ -836,7 +840,7 @@ export default function AddProductPage() {
               type="button"
               onClick={() => handleSubmit(false, true)}
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary"
             >
               {loading ? 'Submitting...' : 'Submit for Approval'}
             </button>

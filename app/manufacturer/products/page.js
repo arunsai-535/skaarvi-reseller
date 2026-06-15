@@ -68,19 +68,19 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen py-8" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Products</h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Products</h1>
+            <p className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               Manage your product catalog
             </p>
           </div>
           <button
             onClick={() => router.push('/manufacturer/products/add')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn btn-primary"
           >
             <Plus size={20} />
             Add Product
@@ -88,24 +88,24 @@ export default function ProductsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+        <div className="card mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Search</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Search</label>
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
                 placeholder="Search products..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Status</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className="input"
               >
                 <option value="">All Status</option>
                 <option value="draft">Draft</option>
@@ -121,21 +121,21 @@ export default function ProductsPage() {
         {/* Products Table */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading products...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: 'rgb(var(--color-primary))' }}></div>
+            <p className="mt-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>Loading products...</p>
           </div>
         ) : products.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
-            <Package size={64} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="card p-12 text-center">
+            <Package size={64} className="mx-auto mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
               No products found
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               Start by adding your first product to the catalog
             </p>
             <button
               onClick={() => router.push('/manufacturer/products/add')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="btn btn-primary btn-lg"
             >
               <Plus size={20} />
               Add Your First Product
@@ -143,33 +143,33 @@ export default function ProductsPage() {
           </div>
         ) : (
           <>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
+            <div className="card overflow-hidden">
+              <table className="min-w-full divide-y" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                <thead style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Product
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       SKU
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Price
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Stock
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y" style={{ borderColor: 'rgb(var(--color-border))' }}>
                   {products.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={product.id} className="transition-colors hover:opacity-90" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-12 w-12">
@@ -180,40 +180,40 @@ export default function ProductsPage() {
                                 className="h-12 w-12 rounded-lg object-cover"
                               />
                             ) : (
-                              <div className="h-12 w-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                <Package size={24} className="text-gray-400" />
+                              <div className="h-12 w-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+                                <Package size={24} style={{ color: 'rgb(var(--color-text-secondary))' }} />
                               </div>
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
                               {product.name}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                            <div className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                               {product.category?.name || 'Uncategorized'}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">
+                        <div className="text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                           {product.sku || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">
+                        <div className="text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                           ₹{parseFloat(product.costPrice).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Sell: ₹{parseFloat(product.sellingPrice).toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">
+                        <div className="text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                           {product.stockQuantity}
                         </div>
                         {product.stockQuantity <= product.lowStockThreshold && (
-                          <div className="text-xs text-red-600 dark:text-red-400">
+                          <div className="text-xs" style={{ color: 'rgb(var(--color-danger))' }}>
                             Low Stock
                           </div>
                         )}
@@ -225,7 +225,8 @@ export default function ProductsPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => router.push(`/manufacturer/products/${product.id}`)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            className="p-2 rounded transition-colors hover:opacity-70"
+                            style={{ color: 'rgb(var(--color-primary))' }}
                             title="View"
                           >
                             <Eye size={18} />
@@ -233,7 +234,8 @@ export default function ProductsPage() {
                           {product.status === 'draft' && (
                             <button
                               onClick={() => router.push(`/manufacturer/products/add?id=${product.id}`)}
-                              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                              className="p-2 rounded transition-colors hover:opacity-70"
+                              style={{ color: 'rgb(var(--color-text-secondary))' }}
                               title="Edit"
                             >
                               <Edit size={18} />
@@ -241,7 +243,8 @@ export default function ProductsPage() {
                           )}
                           <button
                             onClick={() => handleDelete(product.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            className="p-2 rounded transition-colors hover:opacity-70"
+                            style={{ color: 'rgb(var(--color-danger))' }}
                             title="Delete"
                           >
                             <Trash2 size={18} />
@@ -257,7 +260,7 @@ export default function ProductsPage() {
             {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
+                <div className="text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                   Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
                   {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
                   {pagination.total} results
@@ -266,14 +269,14 @@ export default function ProductsPage() {
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                     disabled={filters.page === 1}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn btn-outline btn-sm"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={filters.page >= pagination.totalPages}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn btn-outline btn-sm"
                   >
                     Next
                   </button>

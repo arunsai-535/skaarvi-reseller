@@ -82,13 +82,14 @@ export default function EarningsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-screen p-6" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.push('/manufacturer/dashboard')}
-            className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mb-4 transition-colors"
+            className="flex items-center mb-4 transition-colors hover:opacity-70"
+            style={{ color: 'rgb(var(--color-primary))' }}
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Dashboard
@@ -139,7 +140,7 @@ export default function EarningsPage() {
                 </div>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 btn btn-primary rounded-lg "
                 >
                   Search
                 </button>
@@ -203,14 +204,14 @@ export default function EarningsPage() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+                  className="px-4 py-2 btn btn-outline rounded-lg "
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === pagination.totalPages}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+                  className="px-4 py-2 btn btn-outline rounded-lg "
                 >
                   Next
                 </button>

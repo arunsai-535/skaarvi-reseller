@@ -150,7 +150,7 @@ export default function ManufacturerDetailPage({ params }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'rgb(var(--color-primary))' }}></div>
       </div>
     );
   }
@@ -193,52 +193,53 @@ export default function ManufacturerDetailPage({ params }) {
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push('/admin/manufacturers')}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-opacity hover:opacity-70"
+            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" style={{ color: 'rgb(var(--color-text))' }} />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{manufacturer.companyName}</h1>
-            <p className="text-gray-600 mt-1">Review manufacturer application</p>
+            <h1 className="text-3xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.companyName}</h1>
+            <p className="mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Review manufacturer application</p>
           </div>
         </div>
         <StatusBadge status={manufacturer.approvalStatus} />
       </div>
 
       {/* Company Information */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="card p-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2" style={{ color: 'rgb(var(--color-text))' }}>
           <Building2 className="w-5 h-5" />
           Company Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="text-sm font-medium text-gray-600">Company Name</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.companyName}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Company Name</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.companyName}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">Brand Name</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.brandName}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Brand Name</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.brandName}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">Contact Person</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.contactPerson}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Contact Person</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.contactPerson}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">Business Type</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.businessType || 'N/A'}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Business Type</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.businessType || 'N/A'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">GST Number</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.gstNumber || 'Not provided'}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>GST Number</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.gstNumber || 'Not provided'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">PAN Number</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.panNumber}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>PAN Number</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.panNumber}</p>
           </div>
           <div className="md:col-span-2">
-            <label className="text-sm font-medium text-gray-600">Address</label>
-            <p className="text-base text-gray-900 mt-1">
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Address</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>
               {manufacturer.address}, {manufacturer.city}, {manufacturer.state} - {manufacturer.pincode}
             </p>
           </div>
@@ -246,38 +247,38 @@ export default function ManufacturerDetailPage({ params }) {
       </div>
 
       {/* Banking Details */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="card p-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2" style={{ color: 'rgb(var(--color-text))' }}>
           <CreditCard className="w-5 h-5" />
           Banking Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="text-sm font-medium text-gray-600">Account Holder Name</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.bankAccountHolder}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Account Holder Name</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.bankAccountHolder}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">Account Number</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.bankAccountNumber}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Account Number</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.bankAccountNumber}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">IFSC Code</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.bankIfscCode}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>IFSC Code</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.bankIfscCode}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">Bank Name</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.bankName}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Bank Name</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.bankName}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600">UPI ID</label>
-            <p className="text-base text-gray-900 mt-1">{manufacturer.upiId || 'Not provided'}</p>
+            <label className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>UPI ID</label>
+            <p className="text-base mt-1" style={{ color: 'rgb(var(--color-text))' }}>{manufacturer.upiId || 'Not provided'}</p>
           </div>
         </div>
       </div>
 
       {/* Documents */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="card p-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2" style={{ color: 'rgb(var(--color-text))' }}>
           <FileText className="w-5 h-5" />
           Uploaded Documents
         </h2>
@@ -288,14 +289,19 @@ export default function ManufacturerDetailPage({ params }) {
               <div
                 key={doc.title}
                 onClick={() => doc.url && openDocument(doc.url, doc.title, doc.type)}
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${
-                  doc.url
-                    ? 'border-primary-300 bg-primary-50 cursor-pointer hover:border-primary-400 hover:bg-primary-100'
-                    : 'border-gray-300 bg-gray-50 cursor-not-allowed'
-                }`}
+                className="border-2 border-dashed rounded-lg p-6 text-center transition-all"
+                style={doc.url ? {
+                  borderColor: 'rgb(var(--color-primary))',
+                  backgroundColor: 'rgba(var(--color-primary), 0.05)',
+                  cursor: 'pointer'
+                } : {
+                  borderColor: 'rgb(var(--color-border))',
+                  backgroundColor: 'rgb(var(--color-surface))',
+                  cursor: 'not-allowed'
+                }}
               >
-                <Icon className={`w-12 h-12 mx-auto mb-3 ${doc.url ? 'text-primary-600' : 'text-gray-400'}`} />
-                <p className={`font-medium ${doc.url ? 'text-gray-900' : 'text-gray-500'}`}>
+                <Icon className="w-12 h-12 mx-auto mb-3" style={{ color: doc.url ? 'rgb(var(--color-primary))' : 'rgb(var(--color-text-secondary))' }} />
+                <p className="font-medium" style={{ color: doc.url ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-secondary))' }}>
                   {doc.title}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
