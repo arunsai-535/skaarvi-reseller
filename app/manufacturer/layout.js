@@ -31,9 +31,14 @@ export default function ManufacturerLayout({ children }) {
   const { user } = useSelector(state => state.auth);
 
   useEffect(() => {
-    // Redirect if not manufacturer
-    if (user && user.role !== 'manufacturer') {
-      router.push('/login/manufacturer');
+    // Redirect if not logged in or not manufacturer
+    if (!user) {
+      router.push('/unauthorized/manufacturer');
+      return;
+    }
+    
+    if (user.role !== 'manufacturer') {
+      router.push('/unauthorized/manufacturer');
     }
   }, [user, router]);
 

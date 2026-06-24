@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, Loader2, Package, ArrowLeft } from 'lucide-react';
+import { Search, Filter, Loader2, Package } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
+import PublicHeader from '@/components/PublicHeader';
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -22,65 +22,24 @@ export default function ProductsPage() {
     try {
       setLoading(true);
       
-      // TODO: Replace with actual API call
-      // For now, using mock data
-      const mockProducts = [
-        {
-          id: 1,
-          name: 'Premium Wireless Headphones',
-          description: 'High-quality sound with noise cancellation',
-          price: 2999,
-          mrp: 4999,
-          sellingPrice: 2999,
-          resellerProfit: 500,
-          stock: 25,
-          imageUrl: 'https://via.placeholder.com/300',
-          category: 'Electronics',
-        },
-        {
-          id: 2,
-          name: 'Smart Fitness Watch',
-          description: 'Track your fitness goals with style',
-          price: 1999,
-          mrp: 3499,
-          sellingPrice: 1999,
-          resellerProfit: 350,
-          stock: 8,
-          imageUrl: 'https://via.placeholder.com/300',
-          category: 'Electronics',
-        },
-        {
-          id: 3,
-          name: 'Portable Bluetooth Speaker',
-          description: 'Powerful sound in a compact design',
-          price: 1499,
-          mrp: 2499,
-          sellingPrice: 1499,
-          resellerProfit: 250,
-          stock: 0,
-          imageUrl: 'https://via.placeholder.com/300',
-          category: 'Electronics',
-        },
-        {
-          id: 4,
-          name: 'USB-C Charging Cable (3-Pack)',
-          description: 'Fast charging, durable braided cables',
-          price: 599,
-          mrp: 999,
-          sellingPrice: 599,
-          resellerProfit: 100,
-          stock: 50,
-          imageUrl: 'https://via.placeholder.com/300',
-          category: 'Accessories',
-        },
-      ];
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Fetch from public API (no auth required)
+      const response = await fetch('/api/public/products?limit=50');
       
-      setProducts(mockProducts);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.status === 'success') {
+          setProducts(result.data.products || []);
+        } else {
+          console.error('API returned error:', result.message);
+          setProducts([]);
+        }
+      } else {
+        console.error('Failed to fetch products, status:', response.status);
+        setProducts([]);
+      }
     } catch (error) {
       console.error('Fetch products error:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -95,32 +54,19 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Products
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Browse and share products with your customers
-                </p>
-              </div>
-            </div>
-            <ThemeSwitcher />
-          </div>
-        </div>
-      </header>
+      {/* Universal Header with Login Modal */}
+      <PublicHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Browse Products
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Discover amazing products and add them to your cart
+          </p>
+        </div>
         {/* Search and Filters */}
         <div className="mb-6 space-y-4">
           {/* Search Bar */}
@@ -131,7 +77,7 @@ export default function ProductsPage() {
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
             />
           </div>
 

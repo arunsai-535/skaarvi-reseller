@@ -4,8 +4,11 @@ import { useAdminAuth } from '@/lib/adminAuth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
-import { LayoutDashboard, Users, Package, LogOut, Menu, X, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { 
+  LayoutDashboard, Users, Package, LogOut, Menu, X, Settings, 
+  ShoppingCart, UserCheck, FolderOpen, DollarSign, BarChart3, Wallet, ArrowUpRight, Award, TrendingUp, Image
+} from 'lucide-react';
+import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -17,7 +20,16 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const [optimisticPath, setOptimisticPath] = useState(null);
   const { theme } = useTheme();
+
+  // Prefetch all navigation routes on mount for instant navigation
+  useEffect(() => {
+    navigation.forEach((item) => {
+      router.prefetch(item.href);
+    });
+  }, [router]);
 
   const handleLogout = async () => {
     try {
@@ -34,10 +46,40 @@ export default function AdminLayout({ children }) {
     router.push('/login');
   };
 
+  const handleNavigation = (href) => {
+    // Skip if already on this page
+    if (pathname === href) return;
+    
+    // Close sidebar on mobile after navigation
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+    
+    // Immediate visual feedback
+    setOptimisticPath(href);
+    
+    // Use startTransition for smooth navigation
+    startTransition(() => {
+      router.push(href);
+      // Clear optimistic state after a short delay
+      setTimeout(() => setOptimisticPath(null), 300);
+    });
+  };
+
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Manufacturers', href: '/admin/manufacturers', icon: Users },
+    { name: 'Resellers', href: '/admin/resellers', icon: UserCheck },
     { name: 'Products', href: '/admin/products', icon: Package },
+    { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
+    { name: 'Wallets', href: '/admin/wallets', icon: Wallet },
+    { name: 'Withdrawals', href: '/admin/withdrawals', icon: ArrowUpRight },
+    { name: 'Settlements', href: '/admin/settlements', icon: DollarSign },
+    { name: 'Referrals', href: '/admin/referrals', icon: Award },
+    { name: 'Banners', href: '/admin/banners', icon: Image },
+    { name: 'Demand Analytics', href: '/admin/demand-analytics', icon: TrendingUp },
+    { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 
@@ -73,34 +115,44 @@ export default function AdminLayout({ children }) {
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              const isOptimistic = optimisticPath === item.href;
+              const shouldHighlight = isActive || isOptimistic;
+              
               return (
-                <Link
+                <button
                   key={item.name}
-                  href={item.href}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
-                  style={isActive ? {
+                  onClick={() => handleNavigation(item.href)}
+                  disabled={isOptimistic}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-100 ease-out transform hover:scale-[1.02] active:scale-[0.98] w-full disabled:cursor-wait"
+                  style={shouldHighlight ? {
                     backgroundColor: 'rgb(var(--color-primary))',
                     color: 'white',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    opacity: isOptimistic ? 0.9 : 1
                   } : {
                     color: 'rgb(var(--color-text))'
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) {
+                    if (!shouldHighlight) {
                       e.currentTarget.style.backgroundColor = 'rgba(var(--color-primary), 0.1)';
-                      e.currentTarget.style.transform = 'translateX(4px)';
+                      e.currentTarget.style.transform = 'translateX(4px) scale(1.02)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) {
+                    if (!shouldHighlight) {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.transform = 'translateX(0)';
+                      e.currentTarget.style.transform = 'translateX(0) scale(1)';
                     }
                   }}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className={`w-5 h-5 ${isOptimistic ? 'animate-pulse' : ''}`} />
                   <span className="font-medium">{item.name}</span>
-                </Link>
+                  {isOptimistic && (
+                    <div className="ml-auto">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </button>
               );
             })}
           </nav>
@@ -157,7 +209,17 @@ export default function AdminLayout({ children }) {
 
         {/* Page Content */}
         <main className="p-6">
-          {children}
+          {isPending && (
+            <div className="fixed top-16 left-0 right-0 z-50 h-1" style={{ backgroundColor: 'rgba(var(--color-primary), 0.1)' }}>
+              <div 
+                className="h-full animate-loading-bar" 
+                style={{ backgroundColor: 'rgb(var(--color-primary))' }}
+              />
+            </div>
+          )}
+          <div className={`transition-opacity duration-200 ${isPending ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
+            {children}
+          </div>
         </main>
       </div>
 

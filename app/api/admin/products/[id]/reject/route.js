@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, context) {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
@@ -13,7 +13,7 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const { id } = params;
+    const { id } = await context.params;
     const body = await request.json();
 
     const response = await fetch(`http://localhost:5000/api/admin/products/${id}/reject`, {

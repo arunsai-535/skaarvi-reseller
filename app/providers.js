@@ -5,16 +5,18 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { Toaster } from 'react-hot-toast';
 import { store, persistor } from '@/store';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { SessionProvider } from '@/contexts/SessionContext';
 
 export function Providers({ children }) {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <ThemeProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
+          <SessionProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
               duration: 4000,
               style: {
                 background: 'rgb(var(--color-surface))',
@@ -50,6 +52,7 @@ export function Providers({ children }) {
               },
             }}
           />
+        </SessionProvider>
         </ThemeProvider>
       </PersistGate>
     </Provider>

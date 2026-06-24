@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Filter } from 'lucide-react';
 import ManufacturerCard from '@/components/admin/ManufacturerCard';
 import toast from 'react-hot-toast';
+import { ListSkeleton } from '@/components/SkeletonLoader';
 
 export default function ManufacturersPage() {
   const router = useRouter();
@@ -99,8 +100,12 @@ export default function ManufacturersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'rgb(var(--color-primary))' }}></div>
+      <div className="space-y-6">
+        <div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 animate-pulse"></div>
+        </div>
+        <ListSkeleton items={5} />
       </div>
     );
   }

@@ -26,6 +26,53 @@ const nextConfig = {
   // Proxy /uploads requests to backend server
   async rewrites() {
     return [
+      // Admin dashboard endpoints (direct to backend with auth header)
+      {
+        source: '/api/admin/dashboard/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/dashboard/:path*`,
+      },
+      // Admin list endpoints (direct to backend with auth header)
+      {
+        source: '/api/admin/products',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/products`,
+      },
+      {
+        source: '/api/admin/manufacturers/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/manufacturers/:path*`,
+      },
+      {
+        source: '/api/admin/resellers/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/resellers/:path*`,
+      },
+      {
+        source: '/api/admin/orders/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/orders/:path*`,
+      },
+      {
+        source: '/api/admin/categories/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/categories/:path*`,
+      },
+      {
+        source: '/api/admin/wallets/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/wallets/:path*`,
+      },
+      {
+        source: '/api/admin/withdrawals/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/withdrawals/:path*`,
+      },
+      {
+        source: '/api/admin/settlements/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/settlements/:path*`,
+      },
+      // Public API routes (direct to backend)
+      {
+        source: '/api/products/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/products/:path*`,
+      },
+      {
+        source: '/api/categories/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/categories/:path*`,
+      },
       {
         source: '/uploads/:path*',
         destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/uploads/:path*`,

@@ -7,6 +7,7 @@ const ManufacturerEarnings = require('./manufacturerEarnings');
 const ManufacturerSettlement = require('./manufacturerSettlement');
 const ProductAnalytics = require('./productAnalytics');
 const { User, Manufacturer } = require('./user');
+const Order = require('./order');
 
 // Simple slug generator function
 const slugify = (text) => {
@@ -470,4 +471,5 @@ module.exports = {
   ManufacturerEarnings,
   ManufacturerSettlement,
   ProductAnalytics,
+  Order,
 };

@@ -268,10 +268,20 @@ router.post('/:id/approve', authMiddleware, adminOnly, async (req, res) => {
       });
     }
 
+    // Allow approval for both pending and rejected manufacturers (for reapproval)
+    if (manufacturer.approvalStatus !== 'pending' && 
+        manufacturer.approvalStatus !== 'rejected') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Only pending or rejected manufacturers can be approved',
+      });
+    }
+
     await manufacturer.update({
       approvalStatus: 'approved',
       approvedBy: req.user.id,
       approvedAt: new Date(),
+      rejectionReason: null, // Clear rejection reason when approving
     });
 
     res.status(200).json({
@@ -302,6 +312,15 @@ router.post('/:id/reject', authMiddleware, adminOnly, async (req, res) => {
       return res.status(404).json({
         status: 'error',
         message: 'Manufacturer not found',
+      });
+    }
+
+    // Allow rejection for both pending and approved manufacturers
+    if (manufacturer.approvalStatus !== 'pending' && 
+        manufacturer.approvalStatus !== 'approved') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Only pending or approved manufacturers can be rejected',
       });
     }
 

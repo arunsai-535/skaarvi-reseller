@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Edit, CheckCircle, XCircle, Eye, DollarSign } from 'lucide-react';
+import { Search, CheckCircle, XCircle, DollarSign, Trash2, Star } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 import { toast } from 'react-hot-toast';
 
@@ -69,9 +69,9 @@ export default function AdminProductsPage() {
   const handleEditPricing = (product) => {
     setSelectedProduct(product);
     setPricingForm({
-      skaarviMargin: product.skaarviMargin || 0,
-      resellerMargin: product.resellerMargin || 0,
-      platformFeeOverride: product.platformFeeOverride || null
+      skaarviMargin: parseFloat(product.skaarviMargin) || 0,
+      resellerMargin: parseFloat(product.resellerMargin) || 0,
+      platformFeeOverride: product.platformFeeOverride ? parseFloat(product.platformFeeOverride) : null
     });
     setShowPricingModal(true);
   };
@@ -81,11 +81,23 @@ export default function AdminProductsPage() {
 
     try {
       setSaving(true);
+      
+      // Convert form values to proper types
+      const pricingData = {
+        skaarviMargin: parseFloat(pricingForm.skaarviMargin) || 0,
+        resellerMargin: parseFloat(pricingForm.resellerMargin) || 0,
+      };
+      
+      // Only include platformFeeOverride if it has a value
+      if (pricingForm.platformFeeOverride !== null && pricingForm.platformFeeOverride !== '') {
+        pricingData.platformFeeOverride = parseFloat(pricingForm.platformFeeOverride);
+      }
+      
       const response = await fetch(`/api/admin/products/${selectedProduct.id}/pricing`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(pricingForm)
+        body: JSON.stringify(pricingData)
       });
 
       const data = await response.json();
@@ -106,11 +118,16 @@ export default function AdminProductsPage() {
   };
 
   const handleApprove = async (productId) => {
+    const product = products.find(p => p.id === productId);
+    const isReapproval = product?.status === 'rejected';
+    
     setConfirmModal({
       isOpen: true,
       type: 'success',
-      title: 'Approve Product',
-      message: 'Are you sure you want to approve this product? It will be visible to all resellers.',
+      title: isReapproval ? 'Reapprove Product' : 'Approve Product',
+      message: isReapproval 
+        ? 'Are you sure you want to reapprove this previously rejected product? It will be visible to all resellers.'
+        : 'Are you sure you want to approve this product? It will be visible to all resellers.',
       showInput: false,
       onConfirm: async () => {
         setConfirmModal({ ...confirmModal, isOpen: false });
@@ -123,7 +140,7 @@ export default function AdminProductsPage() {
           const data = await response.json();
           if (data.status === 'success') {
             fetchProducts();
-            toast.success('Product approved successfully!');
+            toast.success(isReapproval ? 'Product reapproved successfully!' : 'Product approved successfully!');
           } else {
             toast.error(data.message || 'Failed to approve product');
           }
@@ -170,6 +187,61 @@ export default function AdminProductsPage() {
         }
       }
     });
+  };
+
+  const handleDelete = async (productId, productName) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Delete Product',
+      message: `Are you sure you want to delete "${productName}"? This action cannot be undone. Products with existing orders cannot be deleted.`,
+      showInput: false,
+      onConfirm: async () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        
+        try {
+          const response = await fetch(`/api/admin/products/${productId}/delete`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+
+          const data = await response.json();
+          if (data.status === 'success') {
+            fetchProducts();
+            toast.success('Product deleted successfully');
+          } else {
+            toast.error(data.message || 'Failed to delete product');
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          toast.error('Failed to delete product');
+        }
+      }
+    });
+  };
+
+  const handleToggleFeatured = async (productId, productName, currentStatus) => {
+    const newStatus = !currentStatus;
+    
+    try {
+      const response = await fetch(`/api/admin/products/${productId}/featured`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ isFeatured: newStatus })
+      });
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        fetchProducts();
+        toast.success(`Product ${newStatus ? 'featured' : 'unfeatured'} successfully`);
+      } else {
+        toast.error(data.message || 'Failed to update featured status');
+      }
+    } catch (error) {
+      console.error('Toggle featured error:', error);
+      toast.error('Failed to update featured status');
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -260,6 +332,9 @@ export default function AdminProductsPage() {
                   Product
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Manufacturer
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
@@ -285,7 +360,7 @@ export default function AdminProductsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  <td colSpan="9" className="px-6 py-12 text-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'rgb(var(--color-primary))' }}></div>
                     </div>
@@ -293,7 +368,7 @@ export default function AdminProductsPage() {
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  <td colSpan="9" className="px-6 py-12 text-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     No products found
                   </td>
                 </tr>
@@ -312,11 +387,24 @@ export default function AdminProductsPage() {
                             className="w-12 h-12 rounded-lg object-cover"
                           />
                         )}
-                        <div>
-                          <div className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>{product.name}</div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>{product.name}</div>
+                            {product.isFeatured && (
+                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" title="Featured Product" />
+                            )}
+                          </div>
                           <div className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{product.sku || 'No SKU'}</div>
+                          {product.status === 'rejected' && product.rejectionReason && (
+                            <div className="mt-1 text-xs text-red-600 italic">
+                              Rejected: {product.rejectionReason}
+                            </div>
+                          )}
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm" style={{ color: 'rgb(var(--color-text))' }}>
+                      {product.category?.name || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                       {product.manufacturer?.companyName || product.manufacturer?.brandName || 'N/A'}
@@ -345,24 +433,48 @@ export default function AdminProductsPage() {
                         >
                           <DollarSign className="w-4 h-4" />
                         </button>
-                        {product.status === 'pending_approval' && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(product.id)}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                              title="Approve"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleReject(product.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Reject"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </>
+                        {/* Show approve button for pending and rejected products */}
+                        {(product.status === 'pending_approval' || product.status === 'rejected') && (
+                          <button
+                            onClick={() => handleApprove(product.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title={product.status === 'rejected' ? 'Reapprove Product' : 'Approve Product'}
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
                         )}
+                        {/* Show reject button for pending and approved products */}
+                        {(product.status === 'pending_approval' || product.status === 'approved') && (
+                          <button
+                            onClick={() => handleReject(product.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Reject Product"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        {/* Featured toggle for approved products */}
+                        {product.status === 'approved' && (
+                          <button
+                            onClick={() => handleToggleFeatured(product.id, product.name, product.isFeatured)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              product.isFeatured 
+                                ? 'text-yellow-600 hover:bg-yellow-50' 
+                                : 'text-gray-400 hover:bg-gray-50'
+                            }`}
+                            title={product.isFeatured ? 'Remove from Featured' : 'Make Featured'}
+                          >
+                            <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-yellow-600' : ''}`} />
+                          </button>
+                        )}
+                        {/* Delete button */}
+                        <button
+                          onClick={() => handleDelete(product.id, product.name)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>

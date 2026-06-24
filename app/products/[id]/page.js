@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   ArrowLeft, 
   Package, 
@@ -18,11 +19,16 @@ import { toast } from 'react-hot-toast';
 import ProductSaveButton from '@/components/product/ProductSaveButton';
 import ProductShareButton from '@/components/product/ProductShareButton';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
+import { addToCart } from '@/store/slices/cartSlice';
+import { getReferralCodeFromURL, saveReferralCodeToCookie, getReferralCodeFromStorage } from '@/lib/cartUtils';
+import { trackProductViewWithReferral } from '@/lib/referralTracking';
 
 export default function ProductDetailPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const params = useParams();
   const productId = params.id;
+  const { totalItems } = useSelector((state) => state.cart);
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,66 +40,53 @@ export default function ProductDetailPage() {
     if (productId) {
       fetchProductDetails();
     }
-  }, [productId]);
+    
+    // Check for referral code in URL
+    const refCode = getReferralCodeFromURL();
+    if (refCode) {
+      saveReferralCodeToCookie(refCode);
+      toast.success(`Referral code ${refCode} applied!`);
+      
+      // Track referral click (after product loads)
+      setTimeout(() => {
+        if (product) {
+          trackProductViewWithReferral(productId, refCode);
+        }
+      }, 1000);
+    }
+  }, [productId, product]);
 
   const fetchProductDetails = async () => {
     try {
       setLoading(true);
       
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/products/${productId}`, {
-        headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
-      });
+      // Fetch from public API (no auth required)
+      const response = await fetch(`/api/public/products/${productId}`);
 
       if (response.ok) {
         const result = await response.json();
         if (result.status === 'success') {
-          setProduct(result.data);
+          const productData = result.data.product;
+          const images = result.data.images || [];
+          
+          // Format product data
+          setProduct({
+            ...productData,
+            images: images.map(img => img.image_url),
+            imageUrl: images.length > 0 ? images[0].image_url : null,
+          });
         } else {
           toast.error('Product not found');
           router.push('/products');
         }
       } else {
-        // For demo, use mock data if API fails
-        const mockProduct = {
-          id: productId,
-          name: 'Premium Wireless Headphones',
-          description: 'Experience exceptional sound quality with our premium wireless headphones. Features active noise cancellation, 40-hour battery life, and premium comfort padding.',
-          price: 2999,
-          mrp: 4999,
-          sellingPrice: 2999,
-          resellerProfit: 500,
-          stock: 25,
-          imageUrl: 'https://via.placeholder.com/600',
-          images: [
-            'https://via.placeholder.com/600/0000FF/FFFFFF?text=Image+1',
-            'https://via.placeholder.com/600/FF0000/FFFFFF?text=Image+2',
-            'https://via.placeholder.com/600/00FF00/FFFFFF?text=Image+3',
-          ],
-          category: 'Electronics',
-          brand: 'AudioTech',
-          features: [
-            'Active Noise Cancellation',
-            '40-hour battery life',
-            'Premium comfort padding',
-            'Bluetooth 5.0',
-            'Built-in microphone',
-          ],
-          specifications: {
-            'Driver Size': '40mm',
-            'Frequency Response': '20Hz - 20kHz',
-            'Impedance': '32 Ohm',
-            'Weight': '250g',
-            'Warranty': '1 Year',
-          },
-        };
-        setProduct(mockProduct);
+        toast.error('Failed to load product');
+        router.push('/products');
       }
     } catch (error) {
       console.error('Fetch product error:', error);
       toast.error('Failed to load product details');
+      router.push('/products');
     } finally {
       setLoading(false);
     }
@@ -108,13 +101,50 @@ export default function ProductDetailPage() {
   };
 
   const handleAddToCart = () => {
-    // TODO: Implement cart functionality
-    toast.success(`Added ${quantity} item(s) to cart`);
+    if (!product) return;
+    
+    if (product.stock_quantity <= 0) {
+      toast.error('This product is out of stock');
+      return;
+    }
+    
+    // Get referral code from storage (cookie or localStorage)
+    const referralCode = getReferralCodeFromStorage();
+    
+    dispatch(addToCart({
+      productId: product.id,
+      name: product.name,
+      price: product.selling_price,
+      image: product.imageUrl || (product.images && product.images[0]),
+      stock: product.stock_quantity,
+      quantity: quantity,
+      referralCode: referralCode,
+    }));
+    
+    toast.success(`${quantity} item(s) added to cart!`, {
+      duration: 2000,
+      icon: '🛒',
+    });
+    
+    // Optionally navigate to cart
+    // router.push('/cart');
   };
 
   const handleBuyNow = () => {
-    // TODO: Implement direct checkout
-    toast.info('Checkout functionality coming soon');
+    if (!product) return;
+    
+    if (product.stock_quantity <= 0) {
+      toast.error('This product is out of stock');
+      return;
+    }
+    
+    // Add to cart first
+    handleAddToCart();
+    
+    // Then navigate to cart/checkout
+    setTimeout(() => {
+      router.push('/cart');
+    }, 500);
   };
 
   if (loading) {
@@ -168,7 +198,22 @@ export default function ProductDetailPage() {
               <ArrowLeft className="h-5 w-5" />
               <span>Back</span>
             </button>
-            <ThemeSwitcher />
+            <div className="flex items-center gap-4">
+              {/* Cart Icon */}
+              <button
+                onClick={() => router.push('/cart')}
+                className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                title="View Cart"
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {totalItems > 9 ? '9+' : totalItems}
+                  </span>
+                )}
+              </button>
+              <ThemeSwitcher />
+            </div>
           </div>
         </div>
       </header>

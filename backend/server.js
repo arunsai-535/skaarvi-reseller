@@ -7,23 +7,38 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 require('dotenv').config();
 
+const { sessionTimeoutMiddleware } = require('./middleware/sessionTimeout');
+
 const app = express();
 
 // Security middleware
 app.use(helmet());
 
-// CORS - Allow frontend on port 3002
+// CORS - Allow frontend on port 3000
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3002',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { status: 'error', message: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
-app.use('/api/', limiter);
+
+// Apply rate limiting only to auth endpoints (excluding registration)
+app.use('/api/auth/login', limiter);
+app.use('/api/auth/logout', limiter);
+// Registration rate limiting removed for development/testing
+// const registrationLimiter = rateLimit({
+//   windowMs: 60 * 60 * 1000, // 1 hour
+//   max: 5, // 5 registrations per hour per IP
+//   message: { status: 'error', message: 'Too many registration attempts, please try again later.' },
+// });
+// app.use('/api/auth/register', registrationLimiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -39,6 +54,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // Serve static uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Session timeout middleware (applies to all routes except /auth)
+app.use(sessionTimeoutMiddleware);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -63,8 +81,34 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/notifications', require('./routes/notifications'));
 
 // Admin Routes
+app.use('/api/admin/dashboard', require('./routes/admin/dashboard'));
 app.use('/api/admin/products', require('./routes/admin/products'));
 app.use('/api/admin/settings', require('./routes/admin/settings'));
+app.use('/api/admin/withdrawals', require('./routes/admin/withdrawals'));
+app.use('/api/admin/wallets', require('./routes/admin/wallets'));
+app.use('/api/admin/settlements', require('./routes/admin/settlements'));
+app.use('/api/admin/orders', require('./routes/admin/orders'));
+app.use('/api/admin/manufacturers', require('./routes/admin/manufacturers'));
+app.use('/api/admin/resellers', require('./routes/admin/resellers'));
+app.use('/api/admin/categories', require('./routes/admin/categories'));
+app.use('/api/admin/reports', require('./routes/admin/reports'));
+app.use('/api/admin/referrals', require('./routes/admin/referrals'));
+app.use('/api/admin/demand-analytics', require('./routes/admin/demand-analytics'));
+app.use('/api/admin/banners', require('./routes/admin/banners'));
+
+// Reseller Routes (with authentication)
+const { authMiddleware } = require('./middleware/auth');
+app.use('/api/reseller', authMiddleware, require('./routes/reseller'));
+
+// Public Routes (no authentication required)
+app.use('/api/public', require('./routes/public'));
+app.use('/api/track', require('./routes/track'));
+app.use('/api/store', require('./routes/store'));
+app.use('/api/referrals', require('./routes/referrals'));
+
+// Customer Routes (supports both guest and authenticated)
+app.use('/api/customer', require('./routes/customer/orders'));
+app.use('/api/customer', require('./routes/customer/profile'));
 
 // 404 handler
 app.use((req, res) => {
