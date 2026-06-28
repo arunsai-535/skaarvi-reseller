@@ -29,25 +29,25 @@ export function Providers({ children }) {
               success: {
                 duration: 3000,
                 style: {
-                  background: 'rgba(var(--color-success), 0.1)',
-                  color: 'rgb(var(--color-text))',
-                  border: '1px solid rgb(var(--color-success))',
+                  background: 'rgb(var(--color-success))',
+                  color: '#ffffff',
+                  border: 'none',
                 },
                 iconTheme: {
-                  primary: 'rgb(var(--color-success))',
-                  secondary: 'rgb(var(--color-surface))',
+                  primary: '#ffffff',
+                  secondary: 'rgb(var(--color-success))',
                 },
               },
               error: {
                 duration: 4000,
                 style: {
-                  background: 'rgba(var(--color-danger), 0.1)',
-                  color: 'rgb(var(--color-text))',
-                  border: '1px solid rgb(var(--color-danger))',
+                  background: 'rgb(var(--color-danger))',
+                  color: '#ffffff',
+                  border: 'none',
                 },
                 iconTheme: {
-                  primary: 'rgb(var(--color-danger))',
-                  secondary: 'rgb(var(--color-surface))',
+                  primary: '#ffffff',
+                  secondary: 'rgb(var(--color-danger))',
                 },
               },
             }}

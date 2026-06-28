@@ -15,7 +15,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 
 export default function AdminLayout({ children }) {
-  const { user } = useAdminAuth();
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -23,6 +22,15 @@ export default function AdminLayout({ children }) {
   const [isPending, startTransition] = useTransition();
   const [optimisticPath, setOptimisticPath] = useState(null);
   const { theme } = useTheme();
+
+  // If on the root /admin path, render without any auth checks (let page.js handle it)
+  const isRootAdminPath = pathname === '/admin';
+  if (isRootAdminPath) {
+    return <>{children}</>;
+  }
+
+  // For all other admin routes, apply full auth check
+  const { user } = useAdminAuth();
 
   // Prefetch all navigation routes on mount for instant navigation
   useEffect(() => {
@@ -43,7 +51,11 @@ export default function AdminLayout({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     toast.success('Logged out successfully');
-    router.push('/login');
+    
+    // Reset theme to light for public pages
+    localStorage.removeItem('adminTheme');
+    
+    router.push('/');
   };
 
   const handleNavigation = (href) => {
@@ -69,8 +81,10 @@ export default function AdminLayout({ children }) {
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+    { name: 'Returns', href: '/admin/returns', icon: Package },
     { name: 'Manufacturers', href: '/admin/manufacturers', icon: Users },
     { name: 'Resellers', href: '/admin/resellers', icon: UserCheck },
+    { name: 'Upgrade Requests', href: '/admin/reseller-upgrade-requests', icon: UserCheck },
     { name: 'Products', href: '/admin/products', icon: Package },
     { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
     { name: 'Wallets', href: '/admin/wallets', icon: Wallet },

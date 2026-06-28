@@ -548,7 +548,8 @@ export default function ResellersManagementPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => fetchResellerProfile(reseller.userId)}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                          className="hover:opacity-70 transition-opacity"
+                          style={{ color: 'rgb(var(--color-primary))' }}
                           title="View Profile"
                         >
                           <Eye className="w-5 h-5" />
@@ -711,7 +712,7 @@ export default function ResellersManagementPage() {
                       setAction('suspend');
                       setShowActionModal(true);
                     }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                    className="btn btn-danger"
                   >
                     <UserX className="w-4 h-4" />
                     Suspend Reseller
@@ -722,7 +723,7 @@ export default function ResellersManagementPage() {
                       setAction('activate');
                       setShowActionModal(true);
                     }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                    className="btn btn-success"
                   >
                     <UserCheck className="w-4 h-4" />
                     Activate Reseller
@@ -741,7 +742,7 @@ export default function ResellersManagementPage() {
                 </button>
 
                 <button
-                  onClick={() => toast.info('Upgrade feature coming soon')}
+                  onClick={() => toast('Upgrade feature coming soon')}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
                 >
                   <Award className="w-4 h-4" />
@@ -750,7 +751,7 @@ export default function ResellersManagementPage() {
 
                 <button
                   onClick={() => fetchReferralTree(selectedReseller.id)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  className="btn btn-primary"
                 >
                   <Users className="w-4 h-4" />
                   View Referrals
@@ -942,7 +943,7 @@ export default function ResellersManagementPage() {
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="btn btn-primary"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>

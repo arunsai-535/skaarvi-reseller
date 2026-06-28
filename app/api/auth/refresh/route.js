@@ -28,19 +28,3 @@ export async function POST(request) {
     );
   }
 }
-      status: 'success',
-      data: {
-        token: newToken,
-      },
-    });
-  } catch (error) {
-    console.error('Refresh token error:', error);
-    return NextResponse.json(
-      {
-        status: 'error',
-        message: 'Invalid or expired refresh token',
-      },
-      { status: 401 }
-    );
-  }
-}

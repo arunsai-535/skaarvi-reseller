@@ -182,7 +182,7 @@ export default function ManufacturerProductDetailPage() {
           </p>
           <button
             onClick={() => router.push('/manufacturer/products')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+            className="btn btn-primary"
           >
             Back to Products
           </button>
@@ -220,11 +220,7 @@ export default function ManufacturerProductDetailPage() {
             </button>
             <button
               onClick={handleToggleVisibility}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                product.status === 'active'
-                  ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
+              className={product.status === 'active' ? 'btn btn-warning' : 'btn btn-success'}
             >
               {product.status === 'active' ? (
                 <>
@@ -240,7 +236,7 @@ export default function ManufacturerProductDetailPage() {
             </button>
             <button
               onClick={handleEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="btn btn-primary"
             >
               <Edit className="h-5 w-5" />
               Edit
@@ -248,7 +244,7 @@ export default function ManufacturerProductDetailPage() {
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="btn btn-danger"
             >
               {deleting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />

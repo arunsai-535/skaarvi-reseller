@@ -64,6 +64,11 @@ const nextConfig = {
         source: '/api/admin/settlements/:path*',
         destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/admin/settlements/:path*`,
       },
+      // Customer API routes (direct to backend with auth header)
+      {
+        source: '/api/customer/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/customer/:path*`,
+      },
       // Public API routes (direct to backend)
       {
         source: '/api/products/:path*',

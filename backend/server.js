@@ -11,8 +11,11 @@ const { sessionTimeoutMiddleware } = require('./middleware/sessionTimeout');
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware with relaxed CSP for images
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Disable CSP to allow image loading from backend
+}));
 
 // CORS - Allow frontend on port 3000
 app.use(cors({
@@ -88,6 +91,7 @@ app.use('/api/admin/withdrawals', require('./routes/admin/withdrawals'));
 app.use('/api/admin/wallets', require('./routes/admin/wallets'));
 app.use('/api/admin/settlements', require('./routes/admin/settlements'));
 app.use('/api/admin/orders', require('./routes/admin/orders'));
+app.use('/api/admin/returns', require('./routes/admin/returns'));
 app.use('/api/admin/manufacturers', require('./routes/admin/manufacturers'));
 app.use('/api/admin/resellers', require('./routes/admin/resellers'));
 app.use('/api/admin/categories', require('./routes/admin/categories'));
@@ -95,6 +99,11 @@ app.use('/api/admin/reports', require('./routes/admin/reports'));
 app.use('/api/admin/referrals', require('./routes/admin/referrals'));
 app.use('/api/admin/demand-analytics', require('./routes/admin/demand-analytics'));
 app.use('/api/admin/banners', require('./routes/admin/banners'));
+app.use('/api/admin', require('./routes/admin/reseller-upgrades'));
+
+// Customer Routes
+app.use('/api/customer', require('./routes/customer/reseller-upgrade'));
+app.use('/api/customer', require('./routes/customer/check-access'));
 
 // Reseller Routes (with authentication)
 const { authMiddleware } = require('./middleware/auth');

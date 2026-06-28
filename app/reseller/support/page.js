@@ -62,7 +62,7 @@ export default function SupportPage() {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 

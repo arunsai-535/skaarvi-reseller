@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { ShoppingCart, Mail, ArrowRight, Loader2, AlertCircle, ArrowLeft, UserPlus, Lock, Phone, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { setCredentials } from '@/store/slices/authSlice';
 
-export default function CustomerLoginPage() {
+function CustomerLoginForm() {
   const router = useRouter();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
@@ -89,8 +89,9 @@ export default function CustomerLoginPage() {
       
       const { user, token, refreshToken } = data.data;
 
-      // Verify user is customer
-      if (user.role !== 'customer') {
+      // Allow customers and resellers with customer access
+      // (The backend already validated they have customer access)
+      if (user.role !== 'customer' && user.role !== 'reseller') {
         toast.error('Please use the correct login page for your account type.');
         return;
       }
@@ -104,12 +105,14 @@ export default function CustomerLoginPage() {
 
       toast.success('Login successful!');
       
-      // Check if there's a redirect URL
+      // Always redirect to customer portal when logging in from customer login page
       const redirectUrl = searchParams.get('redirect');
       if (redirectUrl) {
+        console.log('[Customer Password Login] Redirecting to:', redirectUrl);
         router.push(redirectUrl);
       } else {
-        router.push('/'); // Go to homepage/product catalog
+        console.log('[Customer Password Login] Redirecting to /customer dashboard');
+        router.push('/customer'); // Always go to customer dashboard
       }
     } catch (err) {
       console.error('[Customer Password Login] Caught error:', err);
@@ -211,12 +214,14 @@ export default function CustomerLoginPage() {
 
       toast.success('Login successful!');
       
-      // Check if there's a redirect URL
+      // Always redirect to customer portal when logging in from customer login page
       const redirectUrl = searchParams.get('redirect');
       if (redirectUrl) {
+        console.log('[Customer OTP Login] Redirecting to:', redirectUrl);
         router.push(redirectUrl);
       } else {
-        router.push('/'); // Go to homepage/product catalog
+        console.log('[Customer OTP Login] Redirecting to /customer dashboard');
+        router.push('/customer'); // Always go to customer dashboard
       }
     } catch (err) {
       console.error('[Customer OTP Login] Verify error:', err);
@@ -475,5 +480,20 @@ export default function CustomerLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CustomerLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center">
+        <div className="text-white text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <CustomerLoginForm />
+    </Suspense>
   );
 }

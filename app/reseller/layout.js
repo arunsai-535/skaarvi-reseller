@@ -54,12 +54,14 @@ export default function ResellerLayout({ children }) {
 
     // Redirect if not logged in
     if (!user) {
-      router.push('/login');
+      router.push('/');
       return;
     }
     
-    // Redirect if not reseller
-    if (user.role !== 'reseller') {
+    // Redirect if not reseller (check both role and resellerId)
+    // Allow access if user has resellerId (they're a reseller, even if logged in as customer)
+    if (user.role !== 'reseller' && !user.resellerId) {
+      console.log('[Reseller Layout] Access denied - role:', user.role, 'resellerId:', user.resellerId);
       router.push('/unauthorized');
     }
   }, [user, router, isChecking]);
@@ -77,7 +79,8 @@ export default function ResellerLayout({ children }) {
   }
 
   // Don't render layout if not authenticated or wrong role
-  if (!user || user.role !== 'reseller') {
+  // Allow access if user has resellerId (they're a reseller, even if logged in as customer)
+  if (!user || (user.role !== 'reseller' && !user.resellerId)) {
     return null;
   }
 
@@ -92,7 +95,11 @@ export default function ResellerLayout({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     toast.success('Logged out successfully');
-    router.push('/login');
+    
+    // Reset theme to light for public pages
+    localStorage.removeItem('resellerTheme');
+    
+    router.push('/');
   };
 
   const navigation = [

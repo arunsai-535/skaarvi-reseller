@@ -28,7 +28,7 @@ export default function ProductDetailPage() {
   const dispatch = useDispatch();
   const params = useParams();
   const productId = params.id;
-  const { totalItems } = useSelector((state) => state.cart);
+  const { totalItems, items: cartItems } = useSelector((state) => state.cart);
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,15 +46,8 @@ export default function ProductDetailPage() {
     if (refCode) {
       saveReferralCodeToCookie(refCode);
       toast.success(`Referral code ${refCode} applied!`);
-      
-      // Track referral click (after product loads)
-      setTimeout(() => {
-        if (product) {
-          trackProductViewWithReferral(productId, refCode);
-        }
-      }, 1000);
     }
-  }, [productId, product]);
+  }, [productId]); // Removed 'product' from dependencies to prevent infinite loop
 
   const fetchProductDetails = async () => {
     try {
@@ -68,12 +61,24 @@ export default function ProductDetailPage() {
         if (result.status === 'success') {
           const productData = result.data.product;
           const images = result.data.images || [];
+          const videos = result.data.videos || [];
           
-          // Format product data
+          // Format product data with backend URL for images
           setProduct({
             ...productData,
-            images: images.map(img => img.image_url),
-            imageUrl: images.length > 0 ? images[0].image_url : null,
+            images: images.map(img => `http://localhost:5000${img.image_url}`),
+            imageUrl: images.length > 0 ? `http://localhost:5000${images[0].image_url}` : null,
+            videos: videos.map(vid => ({
+              url: `http://localhost:5000${vid.video_url}`,
+              thumbnail: vid.thumbnail_url ? `http://localhost:5000${vid.thumbnail_url}` : null
+            })),
+            catalog_url: productData.catalog_url || null,
+            brand: productData.brand_name || productData.brand || null,
+            mrp: parseFloat(productData.mrp) || 0,
+            sellingPrice: parseFloat(productData.selling_price) || 0,
+            price: parseFloat(productData.selling_price) || 0,
+            stock: productData.stock_quantity || 0,
+            resellerProfit: parseFloat(productData.reseller_profit) || 0,
           });
         } else {
           toast.error('Product not found');
@@ -114,7 +119,7 @@ export default function ProductDetailPage() {
     dispatch(addToCart({
       productId: product.id,
       name: product.name,
-      price: product.selling_price,
+      price: product.sellingPrice || product.price,
       image: product.imageUrl || (product.images && product.images[0]),
       stock: product.stock_quantity,
       quantity: quantity,
@@ -138,13 +143,18 @@ export default function ProductDetailPage() {
       return;
     }
     
-    // Add to cart first
-    handleAddToCart();
+    // Check if product is already in cart
+    const existingItem = cartItems.find(item => item.productId === product.id);
     
-    // Then navigate to cart/checkout
+    if (!existingItem) {
+      // Only add to cart if it's not already there
+      handleAddToCart();
+    }
+    
+    // Navigate to cart
     setTimeout(() => {
       router.push('/cart');
-    }, 500);
+    }, existingItem ? 0 : 500);
   };
 
   if (loading) {
@@ -274,6 +284,72 @@ export default function ProductDetailPage() {
                     />
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Product Videos */}
+            {product.videos && product.videos.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Product Videos
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {product.videos.map((video, index) => (
+                    <div key={index} className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                      <video
+                        controls
+                        className="w-full h-full"
+                        poster={video.thumbnail}
+                      >
+                        <source src={video.url} type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Product Catalog */}
+            {product.catalog_url && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Product Catalog
+                </h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-700 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                        <Package className="h-6 w-6 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          Product Catalog (PDF)
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          View detailed specifications and information
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <a
+                      href={`http://localhost:5000${product.catalog_url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center"
+                    >
+                      View Catalog
+                    </a>
+                    <a
+                      href={`http://localhost:5000${product.catalog_url}`}
+                      download
+                      className="flex-1 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-4 py-2 rounded-lg font-medium transition-colors text-center"
+                    >
+                      Download PDF
+                    </a>
+                  </div>
+                </div>
               </div>
             )}
           </div>

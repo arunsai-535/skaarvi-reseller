@@ -173,11 +173,7 @@ export default function ProductAnalyticsPage() {
               <button
                 key={range.value}
                 onClick={() => setDateRange(range.value)}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  dateRange === range.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
-                }`}
+                className={dateRange === range.value ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}
               >
                 {range.label}
               </button>

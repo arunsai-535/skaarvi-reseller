@@ -5,6 +5,11 @@ import { ORDER_STATUS, formatOrderDate } from '@/lib/orderUtils';
 
 export default function OrderTimeline({ currentStatus, statusHistory, orderedAt, shippedAt, deliveredAt }) {
   const getStatusIcon = (status, isActive, isCompleted) => {
+    // Show green checkmark for delivered status (both active and completed)
+    if (status === ORDER_STATUS.DELIVERED && (isActive || isCompleted)) {
+      return <CheckCircle className="w-6 h-6 text-green-600" />;
+    }
+    
     const iconClass = isActive ? 'text-primary-600' : isCompleted ? 'text-green-600' : 'text-gray-400';
     
     if (isCompleted) return <CheckCircle className={`w-6 h-6 ${iconClass}`} />;
@@ -106,6 +111,8 @@ export default function OrderTimeline({ currentStatus, statusHistory, orderedAt,
                 {/* Details */}
                 <div className="flex-1 pt-0.5">
                   <h4 className={`font-semibold ${
+                    // Show green for delivered status when active
+                    step.status === ORDER_STATUS.DELIVERED && isActive && !isDisabled ? 'text-green-900' :
                     isActive && !isDisabled ? 'text-primary-600' : 
                     isCompleted && !isDisabled ? 'text-green-900' : 
                     'text-gray-600'

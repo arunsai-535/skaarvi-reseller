@@ -45,7 +45,8 @@ export default function ProductSaveButton({
     }
   };
 
-  const handleToggleSave = async () => {
+  const handleToggleSave = async (e) => {
+    e.stopPropagation();
     const token = localStorage.getItem('token');
     if (!token) {
       toast.error('Please login to save products');
@@ -109,9 +110,10 @@ export default function ProductSaveButton({
     return (
       <button
         disabled
-        className="p-2 rounded-full bg-gray-100 dark:bg-gray-700"
+        onClick={(e) => e.stopPropagation()}
+        className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700"
       >
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
       </button>
     );
   }
@@ -120,7 +122,7 @@ export default function ProductSaveButton({
     <button
       onClick={handleToggleSave}
       disabled={loading}
-      className={`p-2 rounded-full transition-all ${
+      className={`p-1.5 rounded-full transition-all ${
         isSaved
           ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400'
           : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -128,10 +130,10 @@ export default function ProductSaveButton({
       title={isSaved ? 'Remove from wishlist' : 'Save to wishlist'}
     >
       {loading ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <Heart
-          className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`}
+          className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`}
         />
       )}
     </button>

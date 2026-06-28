@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { authMiddleware, manufacturerOnly } = require('../middleware/auth');
-const { uploadToS3, uploadLocally } = require('../middleware/upload');
+const { uploadToS3, uploadLocally, validateImageQuality } = require('../middleware/upload');
 const { User, Manufacturer, OTP } = require('../models/user');
 const { generateToken, generateRefreshToken } = require('../utils/jwt');
 const { sendOTPEmail, sendWelcomeEmail } = require('../utils/email');
@@ -50,13 +50,41 @@ router.post('/login-bypass', [
 
     // Validate role if userType is specified
     if (userType && user.role !== userType) {
-      return res.status(403).json({
-        status: 'error',
-        message: `This login is for ${userType}s only. Please use the correct login page.`,
-        code: 'ROLE_MISMATCH',
-        expectedRole: userType,
-        actualRole: user.role,
-      });
+      // Special case: Allow resellers to log in as customers if they have a customer record
+      // (meaning they were upgraded from customer)
+      if (userType === 'customer' && user.role === 'reseller') {
+        const sequelize = require('../config/database');
+        const { QueryTypes } = require('sequelize');
+        
+        const [customerRecord] = await sequelize.query(
+          'SELECT id FROM customers WHERE user_id = ?',
+          {
+            replacements: [user.id],
+            type: QueryTypes.SELECT
+          }
+        );
+
+        // If no customer record exists, deny access
+        if (!customerRecord) {
+          return res.status(403).json({
+            status: 'error',
+            message: `This login is for ${userType}s only. Please use the correct login page.`,
+            code: 'ROLE_MISMATCH',
+            expectedRole: userType,
+            actualRole: user.role,
+          });
+        }
+        // If customer record exists, allow login (continue below)
+      } else {
+        // For all other role mismatches, deny access
+        return res.status(403).json({
+          status: 'error',
+          message: `This login is for ${userType}s only. Please use the correct login page.`,
+          code: 'ROLE_MISMATCH',
+          expectedRole: userType,
+          actualRole: user.role,
+        });
+      }
     }
 
     // Update last login
@@ -159,10 +187,13 @@ router.post('/register',
     console.log('Body fields:', Object.keys(req.body));
     console.log('Files:', req.files ? Object.keys(req.files) : 'No files');
     
+    const bcrypt = require('bcryptjs');
+    
     try {
       const {
         mobile,
         email,
+        password,
         companyName,
         brandName,
         contactPersonName,
@@ -184,12 +215,15 @@ router.post('/register',
       console.log('Company Name:', companyName);
 
       // Validate required fields
-      if (!email || !companyName || !contactPersonName) {
+      if (!email || !companyName || !contactPersonName || !password) {
         return res.status(400).json({
           status: 'error',
-          message: 'Required fields missing: email, companyName, contactPersonName',
+          message: 'Required fields missing: email, companyName, contactPersonName, password',
         });
       }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       // Find or create user based on email
       let user = await User.findOne({ where: { email } });
@@ -200,6 +234,7 @@ router.post('/register',
         user = await User.create({
           email,
           mobile,
+          password: hashedPassword,
           role: 'manufacturer',
           isVerified: true, // Auto-verified since OTP is bypassed
           lastLogin: new Date(),
@@ -207,6 +242,8 @@ router.post('/register',
         console.log('User created with ID:', user.id);
       } else {
         console.log('Found existing user with ID:', user.id);
+        // Update password if user already exists
+        await user.update({ password: hashedPassword });
       }
 
       // Check if manufacturer already exists
@@ -417,6 +454,7 @@ router.post('/logout', authMiddleware, async (req, res) => {
 // @access  Public
 router.post('/register/reseller',
   upload.single('profile_photo'),
+  validateImageQuality,
   async (req, res) => {
     console.log('=== Reseller Registration Request Started ===');
     console.log('Body fields:', Object.keys(req.body));
@@ -852,6 +890,362 @@ router.post('/register/customer', async (req, res) => {
   }
 });
 
+// ========================================
+// OTP ENDPOINTS
+// ========================================
+
+// @route   POST /api/auth/send-otp
+// @desc    Send OTP to email or mobile for login
+// @access  Public
+router.post('/send-otp', async (req, res) => {
+  console.log('=== Send OTP Request Started ===');
+
+  const sequelize = require('../config/database');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const { email, mobile, userType, purpose = 'login' } = req.body;
+
+    // Validate input - must provide either email or mobile
+    if (!email && !mobile) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email or mobile is required',
+      });
+    }
+
+    const identifier = email || mobile;
+    console.log('Identifier:', identifier);
+    console.log('User Type:', userType);
+    console.log('Purpose:', purpose);
+
+    // Find user by email or mobile
+    const [user] = await sequelize.query(
+      'SELECT id, email, mobile, role, status FROM users WHERE email = ? OR mobile = ?',
+      {
+        replacements: [identifier, identifier],
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Email/mobile not registered. Please register first.',
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    // Validate role if userType is specified
+    if (userType && user.role !== userType) {
+      // Special case: Allow resellers to log in as customers if they have a customer record
+      if (userType === 'customer' && user.role === 'reseller') {
+        const [customerRecord] = await sequelize.query(
+          'SELECT id FROM customers WHERE user_id = ?',
+          {
+            replacements: [user.id],
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (!customerRecord) {
+          return res.status(403).json({
+            status: 'error',
+            message: `This login is for ${userType}s only. Please use the correct login page.`,
+            code: 'ROLE_MISMATCH',
+          });
+        }
+      } else {
+        return res.status(403).json({
+          status: 'error',
+          message: `This login is for ${userType}s only. Please use the correct login page.`,
+          code: 'ROLE_MISMATCH',
+        });
+      }
+    }
+
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+
+    // Save OTP to database
+    await OTP.create({
+      identifier, // Store identifier (email or mobile)
+      otpCode,
+      purpose,
+      expiresAt,
+      attempts: 0,
+    });
+
+    // Send OTP via email or SMS
+    if (email) {
+      // Send via email
+      await sendOTPEmail(email, otpCode);
+      console.log('✅ OTP sent to email:', email);
+    } else {
+      // Send via SMS (for now, just log it - SMS integration needed)
+      console.log('📱 OTP for mobile:', mobile, '- Code:', otpCode);
+      console.log('⚠️ SMS integration not yet implemented. OTP logged above.');
+      
+      // TODO: Integrate SMS service (Twilio, MSG91, etc.)
+      // For development, return OTP in response
+      if (process.env.NODE_ENV === 'development') {
+        return res.status(200).json({
+          status: 'success',
+          message: 'OTP sent successfully (DEV MODE)',
+          data: { otp: otpCode }, // Only in development!
+        });
+      }
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: email ? 'OTP sent to your email' : 'OTP sent to your mobile',
+    });
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to send OTP',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/auth/verify-otp
+// @desc    Verify OTP and login
+// @access  Public
+router.post('/verify-otp', async (req, res) => {
+  console.log('=== Verify OTP Request Started ===');
+
+  const sequelize = require('../config/database');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const { email, mobile, otp, userType } = req.body;
+
+    // Validate input
+    if (!otp) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'OTP is required',
+      });
+    }
+
+    if (!email && !mobile) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email or mobile is required',
+      });
+    }
+
+    const identifier = email || mobile;
+    console.log('Identifier:', identifier);
+    console.log('OTP:', otp);
+
+    // Find the most recent OTP for this identifier
+    const otpRecord = await OTP.findOne({
+      where: {
+        identifier,
+        otpCode: otp,
+        isVerified: false,
+      },
+      order: [['createdAt', 'DESC']],
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid OTP',
+        code: 'INVALID_OTP',
+      });
+    }
+
+    // Check if OTP is expired
+    if (new Date() > otpRecord.expiresAt) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'OTP has expired. Please request a new one.',
+        code: 'OTP_EXPIRED',
+      });
+    }
+
+    // Check attempts limit
+    if (otpRecord.attempts >= 3) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Maximum OTP verification attempts exceeded. Please request a new OTP.',
+        code: 'MAX_ATTEMPTS_EXCEEDED',
+      });
+    }
+
+    // Find user
+    const [user] = await sequelize.query(
+      'SELECT id, email, mobile, full_name, role, status FROM users WHERE email = ? OR mobile = ?',
+      {
+        replacements: [identifier, identifier],
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found',
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    // Validate role if userType is specified
+    let effectiveRole = user.role; // Default to actual role
+    
+    if (userType && user.role !== userType) {
+      // Special case: Allow resellers to log in as customers if they have a customer record
+      if (userType === 'customer' && user.role === 'reseller') {
+        const [customerRecord] = await sequelize.query(
+          'SELECT id FROM customers WHERE user_id = ?',
+          {
+            replacements: [user.id],
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (!customerRecord) {
+          return res.status(403).json({
+            status: 'error',
+            message: `This login is for ${userType}s only.`,
+            code: 'ROLE_MISMATCH',
+          });
+        }
+        
+        // Use customer role for this session
+        effectiveRole = 'customer';
+      } else {
+        return res.status(403).json({
+          status: 'error',
+          message: `This login is for ${userType}s only.`,
+          code: 'ROLE_MISMATCH',
+        });
+      }
+    }
+
+    // Mark OTP as verified
+    await otpRecord.update({
+      isVerified: true,
+      verifiedAt: new Date(),
+    });
+
+    // Update last login
+    await sequelize.query(
+      'UPDATE users SET updated_at = NOW() WHERE id = ?',
+      {
+        replacements: [user.id],
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    // Fetch role-specific data based on effective role
+    let roleData = null;
+
+    if (effectiveRole === 'customer') {
+      const [customer] = await sequelize.query(
+        'SELECT id, full_name, city, state, referred_by_reseller FROM customers WHERE user_id = ?',
+        {
+          replacements: [user.id],
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (customer) {
+        roleData = {
+          customerId: customer.id,
+          fullName: customer.full_name,
+          city: customer.city,
+          state: customer.state,
+          referredByReseller: customer.referred_by_reseller
+        };
+      }
+    } else if (effectiveRole === 'reseller') {
+      const [reseller] = await sequelize.query(
+        'SELECT id, reseller_code, full_name, city, state FROM resellers WHERE user_id = ?',
+        {
+          replacements: [user.id],
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (reseller) {
+        roleData = {
+          resellerId: reseller.id,
+          resellerCode: reseller.reseller_code,
+          fullName: reseller.full_name,
+          city: reseller.city,
+          state: reseller.state,
+          approvalStatus: user.status
+        };
+      }
+    } else if (effectiveRole === 'manufacturer') {
+      const [manufacturer] = await sequelize.query(
+        'SELECT id, company_name, brand_name, contact_person, approval_status FROM manufacturers WHERE user_id = ?',
+        {
+          replacements: [user.id],
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (manufacturer) {
+        roleData = {
+          manufacturerId: manufacturer.id,
+          companyName: manufacturer.company_name,
+          brandName: manufacturer.brand_name,
+          contactPerson: manufacturer.contact_person,
+          approvalStatus: manufacturer.approval_status
+        };
+      }
+    }
+
+    // Generate tokens with effective role
+    const tokenPayload = {
+      id: user.id,
+      email: user.email,
+      role: effectiveRole,
+      customerId: roleData?.customerId || null,
+      resellerId: roleData?.resellerId || null,
+      manufacturerId: roleData?.manufacturerId || null,
+    };
+
+    const token = generateToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Login successful',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          mobile: user.mobile,
+          name: user.full_name,
+          role: effectiveRole,
+          status: user.status,
+          ...roleData
+        },
+        token,
+        refreshToken,
+      },
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'OTP verification failed',
+      error: error.message
+    });
+  }
+});
+
 // @route   POST /api/auth/login/password
 // @desc    Login with email/mobile and password (for customers and resellers)
 // @access  Public
@@ -894,14 +1288,43 @@ router.post('/login/password', async (req, res) => {
     }
 
     // Validate role if userType is specified
+    let effectiveRole = user.role; // Default to actual role
+    console.log('[Password Login] Initial - userType:', userType, 'user.role:', user.role, 'effectiveRole:', effectiveRole);
+    
     if (userType && user.role !== userType) {
-      return res.status(403).json({
-        status: 'error',
-        message: `This login is for ${userType}s only. Please use the correct login page.`,
-        code: 'ROLE_MISMATCH',
-        expectedRole: userType,
-        actualRole: user.role,
-      });
+      // Special case: Allow resellers to log in as customers if they have a customer record
+      if (userType === 'customer' && user.role === 'reseller') {
+        console.log('[Password Login] Checking for customer record...');
+        const [customerRecord] = await sequelize.query(
+          'SELECT id FROM customers WHERE user_id = ?',
+          {
+            replacements: [user.id],
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (!customerRecord) {
+          return res.status(403).json({
+            status: 'error',
+            message: `This login is for ${userType}s only. Please use the correct login page.`,
+            code: 'ROLE_MISMATCH',
+            expectedRole: userType,
+            actualRole: user.role,
+          });
+        }
+        
+        // Use customer role for this session
+        effectiveRole = 'customer';
+        console.log('[Password Login] Found customer record, set effectiveRole to:', effectiveRole);
+      } else {
+        return res.status(403).json({
+          status: 'error',
+          message: `This login is for ${userType}s only. Please use the correct login page.`,
+          code: 'ROLE_MISMATCH',
+          expectedRole: userType,
+          actualRole: user.role,
+        });
+      }
     }
 
     // Verify password
@@ -914,8 +1337,8 @@ router.post('/login/password', async (req, res) => {
       });
     }
 
-    // Check if account is active (for resellers)
-    if (user.role === 'reseller' && user.status === 'pending') {
+    // Check if account is active (for resellers logging in as resellers)
+    if (effectiveRole === 'reseller' && user.status === 'pending') {
       return res.status(403).json({
         status: 'error',
         message: 'Your account is pending admin approval',
@@ -923,7 +1346,7 @@ router.post('/login/password', async (req, res) => {
       });
     }
 
-    if (user.role === 'reseller' && !user.is_active) {
+    if (effectiveRole === 'reseller' && !user.is_active) {
       return res.status(403).json({
         status: 'error',
         message: 'Your account has been deactivated',
@@ -940,10 +1363,13 @@ router.post('/login/password', async (req, res) => {
       }
     );
 
-    // Fetch role-specific data
+    // Fetch role-specific data based on effective role
     let roleData = null;
+    let additionalData = {}; // Store additional cross-role data
+    console.log('[Password Login] Fetching role data for effectiveRole:', effectiveRole);
 
-    if (user.role === 'customer') {
+    if (effectiveRole === 'customer') {
+      console.log('[Password Login] Fetching customer data...');
       const [customer] = await sequelize.query(
         'SELECT id, full_name, city, state, referred_by_reseller FROM customers WHERE user_id = ?',
         {
@@ -953,6 +1379,7 @@ router.post('/login/password', async (req, res) => {
       );
 
       if (customer) {
+        console.log('[Password Login] Customer data found:', customer);
         roleData = {
           customerId: customer.id,
           fullName: customer.full_name,
@@ -961,7 +1388,27 @@ router.post('/login/password', async (req, res) => {
           referredByReseller: customer.referred_by_reseller
         };
       }
-    } else if (user.role === 'reseller') {
+
+      // If user is actually a reseller (logged in as customer), also fetch reseller data
+      if (user.role === 'reseller') {
+        console.log('[Password Login] User is reseller, also fetching reseller data...');
+        const [reseller] = await sequelize.query(
+          'SELECT id, reseller_code, full_name, city, state FROM resellers WHERE user_id = ?',
+          {
+            replacements: [user.id],
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (reseller) {
+          console.log('[Password Login] Reseller data found (for customer login):', reseller);
+          additionalData.resellerId = reseller.id;
+          additionalData.resellerCode = reseller.reseller_code;
+          additionalData.actualRole = 'reseller'; // Store actual role
+        }
+      }
+    } else if (effectiveRole === 'reseller') {
+      console.log('[Password Login] Fetching reseller data...');
       const [reseller] = await sequelize.query(
         'SELECT id, reseller_code, full_name, city, state FROM resellers WHERE user_id = ?',
         {
@@ -971,6 +1418,7 @@ router.post('/login/password', async (req, res) => {
       );
 
       if (reseller) {
+        console.log('[Password Login] Reseller data found:', reseller);
         roleData = {
           resellerId: reseller.id,
           resellerCode: reseller.reseller_code,
@@ -980,15 +1428,34 @@ router.post('/login/password', async (req, res) => {
           approvalStatus: user.status
         };
       }
+    } else if (effectiveRole === 'manufacturer') {
+      const [manufacturer] = await sequelize.query(
+        'SELECT id, company_name, brand_name, contact_person, approval_status FROM manufacturers WHERE user_id = ?',
+        {
+          replacements: [user.id],
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (manufacturer) {
+        roleData = {
+          manufacturerId: manufacturer.id,
+          companyName: manufacturer.company_name,
+          brandName: manufacturer.brand_name,
+          contactPerson: manufacturer.contact_person,
+          approvalStatus: manufacturer.approval_status
+        };
+      }
     }
 
-    // Generate tokens
+    // Generate tokens with effective role
     const tokenPayload = {
       id: user.id,
       email: user.email,
-      role: user.role,
+      role: effectiveRole,
       customerId: roleData?.customerId || null,
-      resellerId: roleData?.resellerId || null,
+      resellerId: roleData?.resellerId || additionalData.resellerId || null,
+      manufacturerId: roleData?.manufacturerId || null,
     };
 
     const token = generateToken(tokenPayload);
@@ -1003,9 +1470,11 @@ router.post('/login/password', async (req, res) => {
           email: user.email,
           mobile: user.mobile,
           name: user.full_name,
-          role: user.role,
+          role: effectiveRole,
+          actualRole: additionalData.actualRole || effectiveRole, // Include actual role if different
           status: user.status,
-          ...roleData
+          ...roleData,
+          ...additionalData // Include additional cross-role data
         },
         token,
         refreshToken,

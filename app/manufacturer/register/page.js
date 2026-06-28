@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { Building2, ArrowRight, Loader2, Upload } from 'lucide-react';
+import { Building2, ArrowRight, Loader2, Upload, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
 
@@ -16,10 +16,14 @@ export default function RegisterPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     // Pre-fill if user exists
     mobile: user?.mobile?.replace('+91', '') || '',
     email: user?.email || searchParams.get('email') || '',
+    password: '',
+    confirmPassword: '',
     // Step 1: Basic Information
     companyName: '',
     brandName: '',
@@ -112,6 +116,18 @@ export default function RegisterPage() {
     return '';
   };
 
+  const validatePassword = (password) => {
+    if (!password) return 'Password is required';
+    if (password.length < 6) return 'Password must be at least 6 characters';
+    return '';
+  };
+
+  const validateConfirmPassword = (confirmPassword, password) => {
+    if (!confirmPassword) return 'Please confirm your password';
+    if (confirmPassword !== password) return 'Passwords do not match';
+    return '';
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -150,6 +166,19 @@ export default function RegisterPage() {
         break;
       case 'upiId':
         error = validateUPI(processedValue);
+        break;
+      case 'password':
+        error = validatePassword(processedValue);
+        // Re-validate confirmPassword if it exists
+        if (formData.confirmPassword) {
+          setErrors(prev => ({
+            ...prev,
+            confirmPassword: validateConfirmPassword(formData.confirmPassword, processedValue)
+          }));
+        }
+        break;
+      case 'confirmPassword':
+        error = validateConfirmPassword(processedValue, formData.password);
         break;
       case 'companyName':
       case 'brandName':
@@ -246,7 +275,7 @@ export default function RegisterPage() {
 
     if (step === 1) {
       // Validate Basic Information
-      const requiredFields = ['companyName', 'brandName', 'contactPersonName', 'mobile', 'email', 'address', 'city', 'state', 'pincode'];
+      const requiredFields = ['companyName', 'brandName', 'contactPersonName', 'mobile', 'email', 'password', 'confirmPassword', 'address', 'city', 'state', 'pincode'];
       
       requiredFields.forEach(field => {
         if (!formData[field] || !formData[field].toString().trim()) {
@@ -406,13 +435,13 @@ export default function RegisterPage() {
       
       toast.success(response.message || 'Registration submitted successfully!');
       
-      // Clear localStorage and redirect to login page
+      // Clear localStorage and redirect to pending approval page
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       
-      // Redirect to login page
+      // Redirect to pending approval page
       setTimeout(() => {
-        router.push('/login');
+        router.push('/pending-approval');
       }, 1500);
     } catch (error) {
       console.error('=== Registration Error ===');
@@ -569,6 +598,61 @@ export default function RegisterPage() {
                     />
                     {errors.email && (
                       <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="label">
+                      Password *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className={`input pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                    )}
+                    <p className="text-gray-500 text-xs mt-1">Minimum 6 characters</p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="confirmPassword" className="label">
+                      Confirm Password *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className={`input pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
                     )}
                   </div>
 
@@ -1005,10 +1089,8 @@ export default function RegisterPage() {
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <a href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-            Login here
-          </a>
+          Already registered?{' '}
+          <span className="text-gray-700">Please wait for admin approval or contact support.</span>
         </div>
       </div>
     </div>

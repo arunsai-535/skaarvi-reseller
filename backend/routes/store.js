@@ -60,8 +60,8 @@ router.get('/:username', async (req, res) => {
         p.selling_price,
         p.reseller_margin,
         p.stock_quantity,
-        c.category_name,
-        (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as primary_image,
+        c.name as category_name,
+        (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order LIMIT 1) as primary_image,
         CASE 
           WHEN p.stock_quantity > 10 THEN 'in_stock'
           WHEN p.stock_quantity > 0 THEN 'low_stock'
@@ -75,7 +75,7 @@ router.get('/:username', async (req, res) => {
         WHERE reseller_id = :resellerId
       )
       AND p.deleted_at IS NULL
-      AND p.is_active = TRUE
+      AND p.status = 'approved'
       ORDER BY p.created_at DESC
       LIMIT 50
     `, {

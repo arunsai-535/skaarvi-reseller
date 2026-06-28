@@ -48,7 +48,7 @@ export default function OrdersPage() {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 
@@ -340,7 +340,8 @@ export default function OrdersPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/reseller/orders/${order.id}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-opacity hover:opacity-70"
+                      style={{ color: 'rgb(var(--color-primary))' }}
                     >
                       <Eye className="h-4 w-4" />
                       View

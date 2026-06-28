@@ -31,7 +31,7 @@ export default function ManufacturersPage() {
       
       if (!token) {
         toast.error('Please login to continue');
-        router.push('/login');
+        router.push('/login/admin');
         return;
       }
 

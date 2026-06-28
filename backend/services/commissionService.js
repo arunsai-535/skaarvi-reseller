@@ -21,7 +21,7 @@ async function calculateCommission(orderItems, resellerId, sequelize) {
           reseller_margin,
           selling_price
          FROM products
-         WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL`,
+         WHERE id = ? AND status = 'approved' AND deleted_at IS NULL`,
         {
           replacements: [item.productId],
           type: QueryTypes.SELECT

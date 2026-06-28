@@ -13,7 +13,9 @@ import {
   X,
   ShoppingCart,
   Bell,
-  Heart
+  Heart,
+  Truck,
+  Store
 } from 'lucide-react';
 import { logout } from '@/store/slices/authSlice';
 import toast from 'react-hot-toast';
@@ -29,29 +31,118 @@ export default function CustomerLayout({ children }) {
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
   const { totalItems } = useSelector((state) => state.cart);
   
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false); // Desktop sidebar state
   const [mounted, setMounted] = useState(false);
+  const [hasCustomerAccess, setHasCustomerAccess] = useState(null); // null = not checked yet, true = has access, false = no access
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [accessCheckError, setAccessCheckError] = useState(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Check if reseller has customer access (was upgraded from customer)
   useEffect(() => {
-    if (mounted && !loading) {
+    const checkCustomerAccess = async () => {
+      console.log('[Customer Layout] Checking access for user:', user?.email, 'role:', user?.role);
+      
+      if (!user || user.role === 'customer') {
+        console.log('[Customer Layout] User is customer, granting access');
+        setHasCustomerAccess(true);
+        setCheckingAccess(false);
+        setAccessCheckError(null);
+        return;
+      }
+
+      if (user.role === 'reseller') {
+        try {
+          const token = localStorage.getItem('token');
+          console.log('[Customer Layout] User is reseller, checking for customer record...');
+          
+          const response = await fetch('/api/customer/check-access', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          console.log('[Customer Layout] API response status:', response.status);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('[Customer Layout] API response data:', data);
+            const hasAccess = data.hasAccess === true;
+            setHasCustomerAccess(hasAccess);
+            setAccessCheckError(null);
+            
+            if (!hasAccess) {
+              console.warn('[Customer Layout] Reseller does NOT have customer access - will redirect');
+            }
+          } else {
+            console.error('[Customer Layout] API error response:', response.status, response.statusText);
+            // On API error, don't redirect immediately - show error
+            setHasCustomerAccess(null);
+            setAccessCheckError(`API error: ${response.status}`);
+          }
+        } catch (error) {
+          console.error('[Customer Layout] Exception checking customer access:', error);
+          // On exception, don't redirect immediately - show error
+          setHasCustomerAccess(null);
+          setAccessCheckError(error.message);
+        }
+      } else {
+        console.log('[Customer Layout] User role is not customer or reseller:', user.role);
+        setHasCustomerAccess(false);
+        setAccessCheckError(null);
+      }
+      
+      setCheckingAccess(false);
+    };
+
+    if (mounted && user) {
+      checkCustomerAccess();
+    }
+  }, [user, mounted]);
+
+  useEffect(() => {
+    if (mounted && !loading && !checkingAccess) {
+      console.log('[Customer Layout] Redirect check - auth:', isAuthenticated, 'hasAccess:', hasCustomerAccess, 'user:', user?.email, 'error:', accessCheckError);
+      
+      // Skip authentication check if on login or register pages
+      if (pathname?.includes('/login') || pathname?.includes('/register')) {
+        console.log('[Customer Layout] On public page, skipping auth check');
+        return;
+      }
+      
       if (!isAuthenticated) {
-        toast.error('Please login to access customer dashboard');
+        console.log('[Customer Layout] Not authenticated, redirecting to login');
+        // Don't show toast here - SessionContext or login page will handle it
         router.push(`/login/customer?redirect=${encodeURIComponent(pathname)}`);
-      } else if (user?.role !== 'customer') {
-        toast.error('Access denied: Customer account required');
-        router.push('/unauthorized');
+      } else if (hasCustomerAccess === false) {
+        // Only redirect if we EXPLICITLY confirmed no access (not null/undefined)
+        console.log('[Customer Layout] No customer access, redirecting...');
+        toast.error('Access denied: This portal is for customers only');
+        if (user?.role === 'reseller') {
+          console.log('[Customer Layout] Redirecting to reseller dashboard');
+          router.push('/reseller/dashboard');
+        } else {
+          console.log('[Customer Layout] Redirecting to unauthorized page');
+          router.push('/unauthorized');
+        }
+      } else if (hasCustomerAccess === null && accessCheckError) {
+        // Access check failed - show error but don't redirect
+        console.error('[Customer Layout] Access check failed:', accessCheckError);
+        toast.error(`Failed to verify access: ${accessCheckError}`);
+      } else if (hasCustomerAccess === true) {
+        console.log('[Customer Layout] Access granted, showing customer portal');
       }
     }
-  }, [isAuthenticated, user, loading, mounted, router, pathname]);
+  }, [isAuthenticated, user, loading, mounted, router, pathname, hasCustomerAccess, checkingAccess, accessCheckError]);
 
   const handleLogout = () => {
     dispatch(logout());
     toast.success('Logged out successfully');
-    router.push('/login/customer');
+    router.push('/');
   };
 
   const navigationItems = [
@@ -62,14 +153,35 @@ export default function CustomerLayout({ children }) {
       exact: true,
     },
     {
+      name: 'Products',
+      href: '/customer/products',
+      icon: Package,
+    },
+    {
+      name: 'Cart',
+      href: '/customer/cart',
+      icon: ShoppingCart,
+    },
+    {
       name: 'My Orders',
       href: '/customer/orders',
+      icon: Truck,
+    },
+    {
+      name: 'Returns',
+      href: '/customer/returns',
       icon: Package,
     },
     {
       name: 'Wishlist',
       href: '/customer/wishlist',
       icon: Heart,
+    },
+    {
+      name: 'Become a Reseller',
+      href: '/customer/become-reseller',
+      icon: Store,
+      badge: user?.role === 'customer' ? 'new' : null,
     },
     {
       name: 'Profile',
@@ -85,16 +197,16 @@ export default function CustomerLayout({ children }) {
     return pathname.startsWith(item.href);
   };
 
-  if (loading || !mounted) {
+  if (loading || !mounted || checkingAccess) {
     return <PageLoader />;
   }
 
-  if (!isAuthenticated || user?.role !== 'customer') {
+  if (!isAuthenticated || !hasCustomerAccess) {
     return <PageLoader />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -105,43 +217,56 @@ export default function CustomerLayout({ children }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        style={{ backgroundColor: 'rgb(var(--color-background))' }}
+        className={`fixed top-0 left-0 z-50 h-full shadow-lg transform transition-all duration-300 ease-in-out ${
+          desktopSidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
+        } ${
+          sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'
+        } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
+          <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
+            <div className={`flex items-center gap-3 ${desktopSidebarCollapsed ? 'lg:justify-center lg:w-full' : ''}`}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(to bottom right, rgb(var(--color-primary)), rgb(59 130 246))' }}>
                 <ShoppingCart className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Skaarvi</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Customer Portal</p>
+              <div className={desktopSidebarCollapsed ? 'lg:hidden' : ''}>
+                <h1 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>Skaarvi</h1>
+                <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>Customer Portal</p>
               </div>
             </div>
+            {/* Mobile close button */}
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="lg:hidden transition-colors"
+              style={{ color: 'rgb(var(--color-text-secondary))' }}
             >
               <X className="h-6 w-6" />
+            </button>
+            {/* Desktop collapse button */}
+            <button
+              onClick={() => setDesktopSidebarCollapsed(!desktopSidebarCollapsed)}
+              className="hidden lg:block transition-colors"
+              style={{ color: 'rgb(var(--color-text-secondary))' }}
+            >
+              <Menu className="h-6 w-6" />
             </button>
           </div>
 
           {/* User Info */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+          <div className={`p-4 border-b ${desktopSidebarCollapsed ? 'lg:flex lg:justify-center' : ''}`} style={{ borderColor: 'rgb(var(--color-border))' }}>
+            <div className={`flex items-center gap-3 ${desktopSidebarCollapsed ? 'lg:flex-col lg:gap-2' : ''}`}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(to bottom right, rgb(var(--color-primary)), rgb(59 130 246))' }}>
                 <span className="text-white font-bold text-lg">
                   {user?.name?.[0]?.toUpperCase() || user?.full_name?.[0]?.toUpperCase() || 'C'}
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              <div className={`flex-1 min-w-0 ${desktopSidebarCollapsed ? 'lg:hidden' : ''}`}>
+                <p className="text-sm font-semibold truncate" style={{ color: 'rgb(var(--color-text))' }}>
                   {user?.name || user?.full_name || 'Customer'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-xs truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   {user?.email}
                 </p>
               </div>
@@ -154,20 +279,44 @@ export default function CustomerLayout({ children }) {
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item);
+                const isCartItem = item.href === '/customer/cart';
+                const hasBadge = item.badge;
 
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                        active
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all relative ${
+                        desktopSidebarCollapsed ? 'lg:justify-center' : ''
                       }`}
+                      style={active ? {
+                        backgroundColor: 'rgba(var(--color-primary), 0.1)',
+                        color: 'rgb(var(--color-primary))',
+                        fontWeight: '600'
+                      } : {
+                        color: 'rgb(var(--color-text))'
+                      }}
+                      title={desktopSidebarCollapsed ? item.name : ''}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.name}</span>
+                      <Icon className="h-5 w-5 flex-shrink-0" />
+                      <span className={desktopSidebarCollapsed ? 'lg:hidden' : ''}>{item.name}</span>
+                      {isCartItem && totalItems > 0 && (
+                        <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${desktopSidebarCollapsed ? 'lg:absolute lg:top-1 lg:right-1 lg:ml-0' : ''}`} style={{
+                          backgroundColor: 'rgb(var(--color-primary))',
+                          color: 'white'
+                        }}>
+                          {totalItems > 9 ? '9+' : totalItems}
+                        </span>
+                      )}
+                      {hasBadge && item.badge === 'new' && (
+                        <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full uppercase ${desktopSidebarCollapsed ? 'lg:absolute lg:top-1 lg:right-1 lg:ml-0' : ''}`} style={{
+                          backgroundColor: 'rgb(var(--color-success))',
+                          color: 'white'
+                        }}>
+                          {item.badge}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );
@@ -175,38 +324,33 @@ export default function CustomerLayout({ children }) {
             </ul>
           </nav>
 
-          {/* Browse Products Button */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <Link
-              href="/products"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              Browse Products
-            </Link>
-          </div>
-
           {/* Logout */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-auto p-4 border-t" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+              className={`flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-all ${
+                desktopSidebarCollapsed ? 'lg:justify-center' : ''
+              }`}
+              title={desktopSidebarCollapsed ? 'Logout' : ''}
             >
-              <LogOut className="h-5 w-5" />
-              <span className="font-semibold">Logout</span>
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              <span className={`font-semibold ${desktopSidebarCollapsed ? 'lg:hidden' : ''}`}>Logout</span>
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="lg:pl-64">
+      <div className={`transition-all duration-300 ${
+        desktopSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+      }`}>
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-white dark:bg-gray-800 shadow-sm">
+        <header className="sticky top-0 z-30 shadow-sm" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
           <div className="flex items-center justify-between px-4 py-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="lg:hidden transition-colors"
+              style={{ color: 'rgb(var(--color-text-secondary))' }}
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -217,7 +361,8 @@ export default function CustomerLayout({ children }) {
               {/* Cart Badge */}
               <Link
                 href="/cart"
-                className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="relative p-2 transition-colors"
+                style={{ color: 'rgb(var(--color-text-secondary))' }}
               >
                 <ShoppingCart className="h-6 w-6" />
                 {totalItems > 0 && (
@@ -237,7 +382,7 @@ export default function CustomerLayout({ children }) {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 lg:p-8">
+        <main className={pathname === '/customer/products' ? '' : 'p-4 lg:p-8'}>
           {children}
         </main>
       </div>

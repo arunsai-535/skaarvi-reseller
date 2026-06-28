@@ -168,18 +168,18 @@ export default function CustomerProfilePage() {
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
           My Profile
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
           Manage your account information and preferences
         </p>
       </div>
 
       {/* Profile Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="card">
         {/* Profile Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -193,10 +193,10 @@ export default function CustomerProfilePage() {
                 </button>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
                   {profileData.name}
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Customer Account
                 </p>
               </div>
@@ -204,7 +204,7 @@ export default function CustomerProfilePage() {
             {!editMode && !passwordMode && (
               <button
                 onClick={() => setEditMode(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                className="btn btn-primary btn-sm"
               >
                 <Edit2 className="h-4 w-4" />
                 Edit Profile
@@ -220,17 +220,17 @@ export default function CustomerProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                     Full Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
                     <input
                       type="text"
                       value={profileData.name}
                       onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
                       disabled={!editMode}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-500"
+                      className="input pl-10"
                       required
                     />
                   </div>
@@ -238,11 +238,11 @@ export default function CustomerProfilePage() {
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
                     Email Address <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
                     <input
                       type="email"
                       value={profileData.email}

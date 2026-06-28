@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, ArrowLeft, Package, Tag } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, ArrowLeft, Package, Tag, Home } from 'lucide-react';
 import { removeFromCart, updateQuantity, clearCart } from '@/store/slices/cartSlice';
 import { formatPrice } from '@/lib/cartUtils';
+import PublicHeader from '@/components/PublicHeader';
+import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
 
 export default function CartPage() {
@@ -53,41 +54,41 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                  <ShoppingCart className="h-8 w-8" />
-                  Shopping Cart
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
-                </p>
-              </div>
-            </div>
-            {items.length > 0 && (
-              <button
-                onClick={handleClearCart}
-                className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Clear Cart
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      {/* Universal Header */}
+      <PublicHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back to Home Button */}
+        <button
+          onClick={() => router.push('/')}
+          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm font-medium">Back to Home</span>
+        </button>
+
+        {/* Page Title */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <ShoppingCart className="h-8 w-8" />
+              Shopping Cart
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
+            </p>
+          </div>
+          {items.length > 0 && (
+            <button
+              onClick={handleClearCart}
+              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium flex items-center gap-2 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear Cart
+            </button>
+          )}
+        </div>
+
         {items.length === 0 ? (
           /* Empty Cart State */
           <div className="text-center py-16">
@@ -282,6 +283,9 @@ export default function CartPage() {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

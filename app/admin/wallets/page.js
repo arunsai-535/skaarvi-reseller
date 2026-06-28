@@ -176,7 +176,7 @@ export default function WalletManagementPage() {
         <div className="flex gap-3">
           <Link
             href="/admin/withdrawals"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="btn btn-primary"
           >
             <ArrowUpRight className="w-4 h-4" />
             Withdrawals

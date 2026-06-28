@@ -329,7 +329,8 @@ export default function CategoriesManagementPage() {
                   <button
                     key={`view-${category.categoryId}`}
                     onClick={() => router.push(`/admin/products?category=${category.categoryId}`)}
-                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                    className="p-2 hover:opacity-70 transition-opacity rounded-lg"
+                    style={{ color: 'rgb(var(--color-primary))' }}
                     title="View Products"
                   >
                     <Eye className="w-4 h-4" />
@@ -409,7 +410,8 @@ export default function CategoriesManagementPage() {
                       <button
                         key={`view-${category.categoryId}`}
                         onClick={() => router.push(`/admin/products?category=${category.categoryId}`)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                        className="hover:opacity-70 transition-opacity"
+                        style={{ color: 'rgb(var(--color-primary))' }}
                         title="View Products"
                       >
                         <Eye className="w-5 h-5" />

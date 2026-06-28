@@ -160,14 +160,6 @@ export default function OrderDetailPage() {
       }
     });
   };
-      }
-    } catch (error) {
-      console.error('Deliver order error:', error);
-      toast.error(error.message || 'Failed to mark as delivered');
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   if (loading) {
     return (

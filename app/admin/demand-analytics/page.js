@@ -248,7 +248,7 @@ export default function DemandAnalyticsPage() {
         </div>
         <button
           onClick={exportToCSV}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all active:scale-95"
+          className="btn btn-success"
           disabled={products.length === 0}
         >
           <Download className="w-4 h-4" />

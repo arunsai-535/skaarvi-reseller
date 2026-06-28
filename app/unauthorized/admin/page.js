@@ -87,14 +87,7 @@ export default function UnauthorizedAdminPage() {
                   <Lock className="w-4 h-4" />
                   Login as Admin
                 </Link>
-                <Link href="/login" 
-                      className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                      style={{ 
-                        backgroundColor: 'rgba(var(--color-text-secondary), 0.1)',
-                        color: 'rgb(var(--color-text-primary))'
-                      }}>
-                  Login with Different Account
-                </Link>
+
               </>
             ) : (
               <button 

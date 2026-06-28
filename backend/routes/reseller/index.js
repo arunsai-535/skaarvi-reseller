@@ -10,7 +10,9 @@ const resellerOnly = (req, res, next) => {
     });
   }
 
-  if (req.user.role !== 'reseller') {
+  // Allow access if user's role is 'reseller' OR if they have a resellerId
+  // (resellers logged in through customer portal will have resellerId but role='customer')
+  if (req.user.role !== 'reseller' && !req.user.resellerId) {
     return res.status(403).json({ 
       status: 'error',
       message: 'Reseller access only. Your role: ' + req.user.role 

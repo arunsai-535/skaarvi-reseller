@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { sequelize } = require('../../models');
 const { authMiddleware, adminOnly } = require('../../middleware/auth');
+const { validateImageQuality } = require('../../middleware/upload');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -10,20 +11,8 @@ const fs = require('fs');
 router.use(authMiddleware);
 router.use(adminOnly);
 
-// Configure multer for banner image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/banners');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'banner-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for banner image uploads - use memory storage for validation
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -40,6 +29,22 @@ const upload = multer({
     }
   }
 });
+
+// Helper function to save banner file to disk after validation
+const saveBannerFile = (file) => {
+  const uploadDir = path.join(__dirname, '../../uploads/banners');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+  const filename = 'banner-' + uniqueSuffix + path.extname(file.originalname);
+  const filepath = path.join(uploadDir, filename);
+  
+  fs.writeFileSync(filepath, file.buffer);
+  
+  return `/uploads/banners/${filename}`;
+};
 
 /**
  * GET /api/admin/banners
@@ -236,7 +241,7 @@ router.get('/:id', async (req, res) => {
  * POST /api/admin/banners
  * Create new banner
  */
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', upload.single('image'), validateImageQuality, async (req, res) => {
   try {
     const {
       title,
@@ -263,7 +268,8 @@ router.post('/', upload.single('image'), async (req, res) => {
     // Get image URL from uploaded file or provided URL
     let imageUrl = req.body.imageUrl;
     if (req.file) {
-      imageUrl = `/uploads/banners/${req.file.filename}`;
+      // Save file to disk after validation
+      imageUrl = saveBannerFile(req.file);
     }
 
     if (!imageUrl) {
@@ -321,7 +327,7 @@ router.post('/', upload.single('image'), async (req, res) => {
  * PUT /api/admin/banners/:id
  * Update banner
  */
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', upload.single('image'), validateImageQuality, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -356,7 +362,8 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     // Handle image update
     let imageUrl = req.body.imageUrl || currentBanner[0].image_url;
     if (req.file) {
-      imageUrl = `/uploads/banners/${req.file.filename}`;
+      // Save new file to disk after validation
+      imageUrl = saveBannerFile(req.file);
       
       // Delete old image if it exists
       const oldImagePath = path.join(__dirname, '../../', currentBanner[0].image_url);

@@ -163,7 +163,7 @@ export default function ResellerRegistrationPage() {
       if (data.status === 'success') {
         toast.success('Registration successful! Please wait for admin approval.');
         setTimeout(() => {
-          router.push('/login');
+          router.push('/pending-approval');
         }, 2000);
       } else {
         toast.error(data.message || 'Registration failed');
@@ -632,10 +632,8 @@ export default function ResellerRegistrationPage() {
         {/* Login Link */}
         <div className="text-center mt-6">
           <p className="text-gray-600 dark:text-gray-400">
-            Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
-              Login here
-            </Link>
+            Already registered?{' '}
+            <span className="text-gray-700">Please wait for admin approval or contact support.</span>
           </p>
         </div>
       </div>

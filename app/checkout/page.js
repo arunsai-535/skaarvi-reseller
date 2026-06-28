@@ -65,9 +65,12 @@ export default function CheckoutPage() {
     
     // Pre-fill user info if logged in
     if (isAuthenticated && user) {
+      console.log('[Checkout] User data:', { name: user.name, fullName: user.fullName, email: user.email, mobile: user.mobile });
+      const userName = user.name || user.fullName || user.email?.split('@')[0] || '';
+      console.log('[Checkout] Using name:', userName);
       setShippingInfo(prev => ({
         ...prev,
-        fullName: user.name || user.full_name || '',
+        fullName: userName,
         mobile: user.mobile || '',
         email: user.email || '',
       }));
@@ -84,7 +87,7 @@ export default function CheckoutPage() {
 
   const handleGuestCheckout = () => {
     setShowAuthModal(false);
-    toast.info('Continuing as guest. You\'ll create an account after placing the order.');
+    toast('Continuing as guest. You\'ll create an account after placing the order.');
   };
 
   const handlePasswordLogin = async (e) => {
@@ -107,6 +110,13 @@ export default function CheckoutPage() {
       if (response.ok) {
         const { user, token, refreshToken } = data.data;
         
+        console.log('[Checkout Login] User data received:', { 
+          name: user.name, 
+          fullName: user.fullName,
+          email: user.email,
+          mobile: user.mobile
+        });
+        
         localStorage.setItem('token', token);
         localStorage.setItem('refreshToken', refreshToken);
         
@@ -117,10 +127,13 @@ export default function CheckoutPage() {
         toast.success('Login successful!');
         setShowAuthModal(false);
         
-        // Pre-fill shipping info
+        // Pre-fill shipping info with all available name fields
+        const userName = user.name || user.fullName || user.full_name || user.email?.split('@')[0] || '';
+        console.log('[Checkout Login] Using name:', userName);
+        
         setShippingInfo(prev => ({
           ...prev,
-          fullName: user.name || user.full_name || prev.fullName,
+          fullName: userName || prev.fullName,
           mobile: user.mobile || prev.mobile,
           email: user.email || prev.email,
         }));
@@ -186,6 +199,13 @@ export default function CheckoutPage() {
       if (response.ok) {
         const { user, token, refreshToken } = data.data;
         
+        console.log('[Checkout OTP Login] User data received:', { 
+          name: user.name, 
+          fullName: user.fullName,
+          email: user.email,
+          mobile: user.mobile
+        });
+        
         localStorage.setItem('token', token);
         localStorage.setItem('refreshToken', refreshToken);
         
@@ -195,9 +215,13 @@ export default function CheckoutPage() {
         toast.success('Login successful!');
         setShowAuthModal(false);
         
+        // Pre-fill shipping info with all available name fields
+        const userName = user.name || user.fullName || user.full_name || user.email?.split('@')[0] || '';
+        console.log('[Checkout OTP Login] Using name:', userName);
+        
         setShippingInfo(prev => ({
           ...prev,
-          fullName: user.name || user.full_name || prev.fullName,
+          fullName: userName || prev.fullName,
           mobile: user.mobile || prev.mobile,
           email: user.email || prev.email,
         }));
@@ -596,33 +620,33 @@ export default function CheckoutPage() {
 
       {/* Auth Modal */}
       {showAuthModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full p-4 sm:p-8 relative my-4 sm:my-8 max-h-[95vh] overflow-y-auto">
             <button
               onClick={handleAuthModalClose}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 z-10"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
 
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 pr-8">
               Sign in to Continue
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
               Login to complete your purchase
             </p>
 
             {/* Auth Tabs */}
-            <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+            <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-6 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <button
                 onClick={() => setAuthMode('password')}
-                className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                className={`flex-1 py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   authMode === 'password'
                     ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
-                <Lock className="w-4 h-4 inline-block mr-2" />
+                <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline-block mr-1 sm:mr-2" />
                 Password
               </button>
               <button
@@ -630,26 +654,26 @@ export default function CheckoutPage() {
                   setAuthMode('otp');
                   setOtpSent(false);
                 }}
-                className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                className={`flex-1 py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   authMode === 'otp'
                     ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
-                <Key className="w-4 h-4 inline-block mr-2" />
+                <Key className="w-3 h-3 sm:w-4 sm:h-4 inline-block mr-1 sm:mr-2" />
                 OTP
               </button>
             </div>
 
             {/* Password Login Form */}
             {authMode === 'password' && (
-              <form onSubmit={handlePasswordLogin} className="space-y-4">
+              <form onSubmit={handlePasswordLogin} className="space-y-3 sm:space-y-4">
                 <input
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="Email or Mobile"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
                   required
                 />
                 <input
@@ -657,13 +681,13 @@ export default function CheckoutPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
                   required
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg font-semibold transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Logging in...' : 'Login'}
                 </button>
@@ -672,13 +696,13 @@ export default function CheckoutPage() {
 
             {/* OTP Login Form */}
             {authMode === 'otp' && (
-              <form onSubmit={otpSent ? handleVerifyOTP : handleSendOTP} className="space-y-4">
+              <form onSubmit={otpSent ? handleVerifyOTP : handleSendOTP} className="space-y-3 sm:space-y-4">
                 <input
                   type="tel"
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="Mobile Number"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
                   maxLength="10"
                   disabled={otpSent}
                   required
@@ -689,7 +713,7 @@ export default function CheckoutPage() {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="Enter 6-digit OTP"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors duration-200"
                     maxLength="6"
                     autoFocus
                     required
@@ -698,7 +722,7 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg font-semibold transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Processing...' : otpSent ? 'Verify OTP' : 'Send OTP'}
                 </button>
@@ -706,11 +730,11 @@ export default function CheckoutPage() {
             )}
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-4 sm:my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
               </div>
-              <div className="relative flex justify-center text-sm">
+              <div className="relative flex justify-center text-xs sm:text-sm">
                 <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">OR</span>
               </div>
             </div>
@@ -718,12 +742,12 @@ export default function CheckoutPage() {
             {/* Guest Checkout Button */}
             <button
               onClick={handleGuestCheckout}
-              className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 py-3 rounded-lg font-semibold transition-colors"
+              className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 py-2 sm:py-3 text-sm sm:text-base rounded-lg font-semibold transition-colors"
             >
               Continue as Guest
             </button>
 
-            <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-4">
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-3 sm:mt-4">
               Don't have an account?{' '}
               <button
                 onClick={() => router.push('/register/customer')}

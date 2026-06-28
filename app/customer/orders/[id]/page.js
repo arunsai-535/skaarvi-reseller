@@ -18,6 +18,9 @@ import {
   FileText
 } from 'lucide-react';
 import { formatPrice } from '@/lib/cartUtils';
+import { canCancelOrder, canReturnOrder } from '@/lib/orderUtils';
+import CancelOrderModal from '@/components/customer/CancelOrderModal';
+import ReturnOrderModal from '@/components/customer/ReturnOrderModal';
 import toast from 'react-hot-toast';
 
 export default function OrderDetailPage() {
@@ -28,6 +31,9 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -60,6 +66,70 @@ export default function OrderDetailPage() {
       router.push('/customer/orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (reason) => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`/api/customer/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Order cancelled successfully');
+        setShowCancelModal(false);
+        // Refresh order details
+        await fetchOrderDetails();
+      } else {
+        toast.error(data.message || 'Failed to cancel order');
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error('Failed to cancel order');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReturnOrder = async ({ reason, description, images }) => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`/api/customer/orders/${orderId}/return`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason, description, images }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Return request submitted successfully');
+        setShowReturnModal(false);
+        // Refresh order details
+        await fetchOrderDetails();
+      } else {
+        toast.error(data.message || 'Failed to submit return request');
+      }
+    } catch (error) {
+      console.error('Error submitting return request:', error);
+      toast.error('Failed to submit return request');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -128,6 +198,10 @@ export default function OrderDetailPage() {
   const statusConfig = getOrderStatusConfig(order.order_status);
   const StatusIcon = statusConfig.icon;
 
+  // Check cancel/return eligibility
+  const cancelEligibility = canCancelOrder(order);
+  const returnEligibility = canReturnOrder(order);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -166,6 +240,51 @@ export default function OrderDetailPage() {
                 year: 'numeric',
               })}
             </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3 mt-4">
+              {cancelEligibility.eligible && (
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  className="px-4 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 
+                           text-red-600 dark:text-red-400 font-medium rounded-lg shadow-sm 
+                           transition-colors flex items-center gap-2 text-sm"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Cancel Order
+                </button>
+              )}
+
+              {returnEligibility.eligible && (
+                <button
+                  onClick={() => setShowReturnModal(true)}
+                  className="px-4 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 
+                           text-blue-600 dark:text-blue-400 font-medium rounded-lg shadow-sm 
+                           transition-colors flex items-center gap-2 text-sm"
+                >
+                  <Package className="h-4 w-4" />
+                  Return Order
+                  {returnEligibility.daysRemaining !== undefined && (
+                    <span className="text-xs opacity-75">
+                      ({returnEligibility.daysRemaining} {returnEligibility.daysRemaining === 1 ? 'day' : 'days'} left)
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {order.return_status && (
+                <div className="px-4 py-2 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm text-sm">
+                  <span className="font-medium">Return Status: </span>
+                  <span className={`font-bold ${
+                    order.return_status === 'pending' ? 'text-yellow-600 dark:text-yellow-400' :
+                    order.return_status === 'approved' ? 'text-green-600 dark:text-green-400' :
+                    'text-red-600 dark:text-red-400'
+                  }`}>
+                    {order.return_status.charAt(0).toUpperCase() + order.return_status.slice(1)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -326,6 +445,25 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Order Modal */}
+      <CancelOrderModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        order={order}
+        onConfirm={handleCancelOrder}
+        loading={actionLoading}
+      />
+
+      {/* Return Order Modal */}
+      <ReturnOrderModal
+        isOpen={showReturnModal}
+        onClose={() => setShowReturnModal(false)}
+        order={order}
+        daysRemaining={returnEligibility.daysRemaining}
+        onConfirm={handleReturnOrder}
+        loading={actionLoading}
+      />
     </div>
   );
 }

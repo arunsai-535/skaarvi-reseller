@@ -43,7 +43,7 @@ export default function DashboardPage() {
       
       if (!token) {
         toast.error('Please login to continue');
-        router.push('/login');
+        router.push('/login/manufacturer');
         return;
       }
 

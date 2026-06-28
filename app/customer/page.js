@@ -11,7 +11,10 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Truck
+  Truck,
+  Store,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { formatPrice } from '@/lib/cartUtils';
 import toast from 'react-hot-toast';
@@ -28,10 +31,34 @@ export default function CustomerDashboard() {
   
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [upgradeRequest, setUpgradeRequest] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+    // Only check upgrade status for customers, not resellers
+    if (user?.role === 'customer') {
+      checkUpgradeStatus();
+    }
+  }, [user]);
+
+  const checkUpgradeStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/customer/reseller-upgrade-status', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUpgradeRequest(data.data);
+      }
+    } catch (error) {
+      // No upgrade request found or error - that's okay
+      console.log('No upgrade request found');
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -177,6 +204,84 @@ export default function CustomerDashboard() {
         </p>
       </div>
 
+      {/* Upgrade Request Status - Only show for customers */}
+      {user?.role === 'customer' && upgradeRequest && (
+        <div className={`rounded-2xl shadow-xl p-8 ${
+          upgradeRequest.status === 'pending' ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+          upgradeRequest.status === 'approved' ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
+          'bg-gradient-to-r from-red-500 to-rose-600'
+        } text-white`}>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                  {upgradeRequest.status === 'pending' && <Clock className="h-8 w-8" />}
+                  {upgradeRequest.status === 'approved' && <CheckCircle className="h-8 w-8" />}
+                  {upgradeRequest.status === 'rejected' && <XCircle className="h-8 w-8" />}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {upgradeRequest.status === 'pending' && 'Reseller Request Pending'}
+                    {upgradeRequest.status === 'approved' && 'Reseller Request Approved!'}
+                    {upgradeRequest.status === 'rejected' && 'Reseller Request Declined'}
+                  </h2>
+                  <p className="text-white/90 text-sm">
+                    Submitted on {new Date(upgradeRequest.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <p className="text-white/90 mb-4">
+                {upgradeRequest.status === 'pending' && 'Your request to become a reseller is under review. We\'ll notify you once it\'s processed.'}
+                {upgradeRequest.status === 'approved' && 'Congratulations! Your reseller account has been activated. You can now start earning commissions!'}
+                {upgradeRequest.status === 'rejected' && `Your request was declined. Reason: ${upgradeRequest.rejection_reason || 'Not specified'}`}
+              </p>
+              {upgradeRequest.status === 'approved' && (
+                <Link
+                  href="/reseller/dashboard"
+                  className="inline-flex items-center gap-2 bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Go to Reseller Dashboard
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reseller Access Card - Show for users who are already resellers */}
+      {user?.role === 'reseller' && (
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                  <Store className="h-8 w-8" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Reseller Account Active</h2>
+                  <p className="text-blue-100 text-sm">Manage your reseller business</p>
+                </div>
+              </div>
+              <p className="text-white/90 mb-6 max-w-2xl">
+                You have an active reseller account. Access your reseller dashboard to manage products, 
+                track commissions, view sales analytics, and more!
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  href="/reseller/dashboard"
+                  className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl"
+                >
+                  <Store className="h-5 w-5" />
+                  Go to Reseller Dashboard
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat) => {
@@ -184,14 +289,14 @@ export default function CustomerDashboard() {
           return (
             <div
               key={stat.title}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow p-6"
+              className="card hover:shadow-lg transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  <p className="text-sm mb-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     {stat.title}
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
                     {stat.value}
                   </p>
                 </div>
@@ -206,7 +311,7 @@ export default function CustomerDashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-xl font-bold mb-4" style={{ color: 'rgb(var(--color-text))' }}>
           Quick Actions
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -216,15 +321,15 @@ export default function CustomerDashboard() {
               <Link
                 key={action.title}
                 href={action.href}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-6 group"
+                className="card hover:shadow-xl transition-all group"
               >
                 <div className={`bg-gradient-to-r ${action.color} rounded-lg p-3 w-fit mb-4 group-hover:scale-110 transition-transform`}>
                   <Icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                <h3 className="text-lg font-bold mb-1" style={{ color: 'rgb(var(--color-text))' }}>
                   {action.title}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   {action.description}
                 </p>
               </Link>
@@ -236,13 +341,14 @@ export default function CustomerDashboard() {
       {/* Recent Orders */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
             Recent Orders
           </h2>
           {recentOrders.length > 0 && (
             <Link
               href="/customer/orders"
-              className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold"
+              className="text-sm font-semibold hover:underline"
+              style={{ color: 'rgb(var(--color-primary))' }}
             >
               View All
             </Link>
@@ -250,24 +356,24 @@ export default function CustomerDashboard() {
         </div>
 
         {recentOrders.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
-            <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="card p-12 text-center">
+            <Package className="h-16 w-16 mx-auto mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'rgb(var(--color-text))' }}>
               No orders yet
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               Start shopping and place your first order!
             </p>
             <Link
               href="/products"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
+              className="btn btn-primary inline-flex items-center gap-2"
             >
               <ShoppingCart className="h-5 w-5" />
               Browse Products
             </Link>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+          <div className="card overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">

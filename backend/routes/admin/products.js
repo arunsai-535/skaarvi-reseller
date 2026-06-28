@@ -110,7 +110,7 @@ router.get('/', authMiddleware, adminOnly, async (req, res) => {
 // SPECIFIC ROUTES MUST COME BEFORE GENERIC /:id ROUTE
 
 // @route   PUT /api/admin/products/:id/pricing
-// @desc    Update product pricing margins (admin only)
+// @desc    Update product pricing (admin only) - Skaarvi Margin + Reseller Margin + 5% Platform Fee
 // @access  Private (Admin only)
 router.put('/:id/pricing',
   authMiddleware,
@@ -118,26 +118,19 @@ router.put('/:id/pricing',
   [
     param('id').isUUID().withMessage('Invalid product ID'),
     body('skaarviMargin')
-      .optional()
-      .isFloat({ min: 0, max: 100 })
-      .withMessage('Skaarvi margin must be between 0 and 100')
+      .isFloat({ min: 0 })
+      .withMessage('Skaarvi margin must be a positive number')
       .toFloat(),
     body('resellerMargin')
-      .optional()
-      .isFloat({ min: 0, max: 100 })
-      .withMessage('Reseller margin must be between 0 and 100')
-      .toFloat(),
-    body('platformFeeOverride')
-      .optional({ nullable: true, checkFalsy: true })
-      .isFloat({ min: 0, max: 100 })
-      .withMessage('Platform fee override must be between 0 and 100')
+      .isFloat({ min: 0 })
+      .withMessage('Reseller margin must be a positive number')
       .toFloat()
   ],
   handleValidationErrors,
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { skaarviMargin, resellerMargin, platformFeeOverride } = req.body;
+      const { skaarviMargin, resellerMargin } = req.body;
 
       const product = await Product.findByPk(id);
       if (!product) {
@@ -147,33 +140,32 @@ router.put('/:id/pricing',
         });
       }
 
+      // Calculate platform fee (fixed ₹5)
+      const platformFee = 5;
+      
+      // Calculate final selling price
+      const sellingPrice = product.costPrice + parseFloat(skaarviMargin) + parseFloat(resellerMargin) + platformFee;
+
       // Update pricing fields
-      const updateData = {};
-      if (skaarviMargin !== undefined) {
-        updateData.skaarviMargin = Number.parseFloat(skaarviMargin);
-      }
-      if (resellerMargin !== undefined) {
-        updateData.resellerMargin = Number.parseFloat(resellerMargin);
-      }
-      if (platformFeeOverride !== undefined) {
-        updateData.platformFeeOverride = Number.parseFloat(platformFeeOverride);
-      }
-
-      // Recalculate selling price
-      const newSkaarviMargin = skaarviMargin !== undefined ? Number.parseFloat(skaarviMargin) : product.skaarviMargin;
-      const newResellerMargin = resellerMargin !== undefined ? Number.parseFloat(resellerMargin) : product.resellerMargin;
-      updateData.sellingPrice = calculateSellingPrice(
-        product.costPrice,
-        newSkaarviMargin,
-        newResellerMargin
-      );
-
-      await product.update(updateData);
+      await product.update({
+        skaarviMargin: parseFloat(skaarviMargin),
+        resellerMargin: parseFloat(resellerMargin),
+        sellingPrice: sellingPrice
+      });
 
       res.status(200).json({
         status: 'success',
         message: 'Product pricing updated successfully',
-        data: { product }
+        data: { 
+          product,
+          priceBreakdown: {
+            costPrice: product.costPrice,
+            skaarviMargin: parseFloat(skaarviMargin),
+            resellerMargin: parseFloat(resellerMargin),
+            platformFee: platformFee,
+            finalPrice: sellingPrice
+          }
+        }
       });
     } catch (error) {
       console.error('Admin update pricing error:', error);

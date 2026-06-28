@@ -170,7 +170,7 @@ export default function StockHistoryPage({ params }) {
                 {history.map((log, index) => (
                   <div key={log.id} className="relative pl-8 pb-6 border-l-2 border-gray-200 dark:border-gray-600 last:border-l-0">
                     {/* Timeline dot */}
-                    <div className="absolute left-0 top-0 -ml-2 w-4 h-4 rounded-full bg-blue-600"></div>
+                    <div className="absolute left-0 top-0 -ml-2 w-4 h-4 rounded-full" style={{ backgroundColor: 'rgb(var(--color-primary))' }}></div>
                     
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">

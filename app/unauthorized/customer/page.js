@@ -87,7 +87,7 @@ export default function UnauthorizedCustomerPage() {
                   <User className="w-4 h-4" />
                   Login as Customer
                 </Link>
-                <Link href="/register" 
+                <Link href="/register/customer" 
                       className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                       style={{ 
                         backgroundColor: 'rgba(var(--color-primary), 0.1)',
@@ -96,14 +96,7 @@ export default function UnauthorizedCustomerPage() {
                   <ShoppingBag className="w-4 h-4" />
                   Create Customer Account
                 </Link>
-                <Link href="/login" 
-                      className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                      style={{ 
-                        backgroundColor: 'rgba(var(--color-text-secondary), 0.1)',
-                        color: 'rgb(var(--color-text-primary))'
-                      }}>
-                  Login with Different Account
-                </Link>
+
               </>
             ) : (
               <button 
@@ -173,7 +166,7 @@ export default function UnauthorizedCustomerPage() {
         <p className="text-center mt-6 text-sm" 
            style={{ color: 'rgb(var(--color-text-secondary))' }}>
           New to Skaarvi?{' '}
-          <Link href="/register" 
+          <Link href="/register/customer" 
                 className="underline hover:opacity-70 transition-opacity"
                 style={{ color: 'rgb(var(--color-primary))' }}>
             Sign up now

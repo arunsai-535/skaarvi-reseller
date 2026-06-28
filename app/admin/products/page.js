@@ -19,8 +19,7 @@ export default function AdminProductsPage() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [pricingForm, setPricingForm] = useState({
     skaarviMargin: 0,
-    resellerMargin: 0,
-    platformFeeOverride: null
+    resellerMargin: 0
   });
   const [saving, setSaving] = useState(false);
   
@@ -69,9 +68,8 @@ export default function AdminProductsPage() {
   const handleEditPricing = (product) => {
     setSelectedProduct(product);
     setPricingForm({
-      skaarviMargin: parseFloat(product.skaarviMargin) || 0,
-      resellerMargin: parseFloat(product.resellerMargin) || 0,
-      platformFeeOverride: product.platformFeeOverride ? parseFloat(product.platformFeeOverride) : null
+      skaarviMargin: parseFloat(product.skaarvi_margin) || parseFloat(product.skaarviMargin) || 0,
+      resellerMargin: parseFloat(product.reseller_margin) || parseFloat(product.resellerMargin) || 0
     });
     setShowPricingModal(true);
   };
@@ -79,19 +77,22 @@ export default function AdminProductsPage() {
   const handleSavePricing = async () => {
     if (!selectedProduct) return;
 
+    // Validation
+    const skaarviMargin = parseFloat(pricingForm.skaarviMargin) || 0;
+    const resellerMargin = parseFloat(pricingForm.resellerMargin) || 0;
+
+    if (skaarviMargin < 0 || resellerMargin < 0) {
+      toast.error('Margins cannot be negative');
+      return;
+    }
+
     try {
       setSaving(true);
       
-      // Convert form values to proper types
       const pricingData = {
-        skaarviMargin: parseFloat(pricingForm.skaarviMargin) || 0,
-        resellerMargin: parseFloat(pricingForm.resellerMargin) || 0,
+        skaarviMargin,
+        resellerMargin
       };
-      
-      // Only include platformFeeOverride if it has a value
-      if (pricingForm.platformFeeOverride !== null && pricingForm.platformFeeOverride !== '') {
-        pricingData.platformFeeOverride = parseFloat(pricingForm.platformFeeOverride);
-      }
       
       const response = await fetch(`/api/admin/products/${selectedProduct.id}/pricing`, {
         method: 'PUT',
@@ -268,11 +269,16 @@ export default function AdminProductsPage() {
     );
   };
 
-  const calculateSellingPrice = (costPrice, skaarvi, reseller) => {
+  const calculatePlatformFee = () => {
+    return 5; // Fixed ₹5 platform fee
+  };
+
+  const calculateFinalPrice = (costPrice, skaarviMargin, resellerMargin) => {
     const cost = parseFloat(costPrice) || 0;
-    const s = parseFloat(skaarvi) / 100;
-    const r = parseFloat(reseller) / 100;
-    return cost * (1 + s + r);
+    const skaarvi = parseFloat(skaarviMargin) || 0;
+    const reseller = parseFloat(resellerMargin) || 0;
+    const platformFee = calculatePlatformFee();
+    return cost + skaarvi + reseller + platformFee;
   };
 
   return (
@@ -340,11 +346,11 @@ export default function AdminProductsPage() {
                 <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Cost Price
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                  Skaarvi %
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Skaarvi Margin
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                  Reseller %
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Reseller Margin
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Selling Price
@@ -412,11 +418,11 @@ export default function AdminProductsPage() {
                     <td className="px-6 py-4 text-right font-medium" style={{ color: 'rgb(var(--color-text))' }}>
                       {formatCurrency(product.costPrice)}
                     </td>
-                    <td className="px-6 py-4 text-center text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                      {product.skaarviMargin}%
+                    <td className="px-6 py-4 text-right text-sm font-medium text-blue-600">
+                      {formatCurrency(product.skaarviMargin)}
                     </td>
-                    <td className="px-6 py-4 text-center text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                      {product.resellerMargin}%
+                    <td className="px-6 py-4 text-right text-sm font-medium text-green-600">
+                      {formatCurrency(product.resellerMargin)}
                     </td>
                     <td className="px-6 py-4 text-right font-semibold" style={{ color: 'rgb(var(--color-primary))' }}>
                       {formatCurrency(product.sellingPrice)}
@@ -515,89 +521,120 @@ export default function AdminProductsPage() {
 
       {/* Pricing Modal */}
       {showPricingModal && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-gray-200 flex-shrink-0">
               <h2 className="text-xl font-semibold text-gray-900">Edit Product Pricing</h2>
               <p className="mt-1 text-sm text-gray-600">{selectedProduct.name}</p>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div>
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              {/* Manufacturer Cost Price (Read-only) */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cost Price (Set by Manufacturer)
+                  Manufacturer Cost Price (Read-only)
                 </label>
                 <input
                   type="text"
-                  value={formatCurrency(selectedProduct.costPrice)}
+                  value={formatCurrency(selectedProduct.costPrice || selectedProduct.cost_price)}
                   disabled
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Base price set by the manufacturer
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skaarvi Margin (%)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={pricingForm.skaarviMargin}
-                  onChange={(e) => setPricingForm(prev => ({ ...prev, skaarviMargin: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reseller Margin (%)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={pricingForm.resellerMargin}
-                  onChange={(e) => setPricingForm(prev => ({ ...prev, resellerMargin: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Platform Fee Override (%) - Optional
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  placeholder="Leave blank for default"
-                  value={pricingForm.platformFeeOverride || ''}
-                  onChange={(e) => setPricingForm(prev => ({ ...prev, platformFeeOverride: e.target.value || null }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-medium text-gray-700">Calculated Selling Price:</span>
-                  <span className="text-xl font-bold text-primary-600">
-                    {formatCurrency(
-                      calculateSellingPrice(
-                        selectedProduct.costPrice,
-                        pricingForm.skaarviMargin,
-                        pricingForm.resellerMargin
-                      )
-                    )}
-                  </span>
+              {/* Admin-Controlled Margins */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Skaarvi Margin (₹) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={pricingForm.skaarviMargin}
+                    onChange={(e) => setPricingForm(prev => ({ ...prev, skaarviMargin: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    placeholder="0.00"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Skaarvi's profit margin per unit
+                  </p>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reseller Margin (₹) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={pricingForm.resellerMargin}
+                    onChange={(e) => setPricingForm(prev => ({ ...prev, resellerMargin: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    placeholder="0.00"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Reseller's profit margin per unit
+                  </p>
+                </div>
+              </div>
+
+              {/* Price Breakdown */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-3">Price Breakdown (Visible to Customer)</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Manufacturer Cost:</span>
+                    <span className="font-medium">
+                      {formatCurrency(selectedProduct.costPrice || selectedProduct.cost_price)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Skaarvi Margin:</span>
+                    <span className="font-medium text-blue-600">
+                      +{formatCurrency(pricingForm.skaarviMargin)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Reseller Margin:</span>
+                    <span className="font-medium text-green-600">
+                      +{formatCurrency(pricingForm.resellerMargin)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Platform Fee (Fixed):</span>
+                    <span className="font-medium text-purple-600">
+                      +{formatCurrency(calculatePlatformFee())}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t-2 border-blue-300 flex justify-between items-center">
+                    <span className="font-semibold text-gray-800">Final Customer Price:</span>
+                    <span className="text-2xl font-bold text-blue-600">
+                      {formatCurrency(
+                        calculateFinalPrice(
+                          selectedProduct.costPrice || selectedProduct.cost_price,
+                          pricingForm.skaarviMargin,
+                          pricingForm.resellerMargin
+                        )
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-xs text-yellow-800">
+                  <strong>Note:</strong> The complete price breakdown will be visible to customers, showing transparency in pricing.
+                </p>
               </div>
             </div>
 
-            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-lg">
+            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-lg flex-shrink-0">
               <button
                 onClick={() => setShowPricingModal(false)}
                 disabled={saving}

@@ -8,6 +8,12 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'SKAARVI - B2B Reseller Marketplace',
   description: 'Connect manufacturers with resellers across India. Wide product range, competitive pricing, and seamless ordering.',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 }
 
 export default function RootLayout({ children }) {

@@ -139,6 +139,15 @@
     filter: brightness(0.9);
   }
 
+  .btn-warning {
+    background-color: rgb(var(--color-warning));
+    @apply text-white focus:ring-yellow-500;
+  }
+  
+  .btn-warning:hover {
+    filter: brightness(0.9);
+  }
+
   .btn-outline {
     @apply border-2;
     border-color: rgb(var(--color-border));

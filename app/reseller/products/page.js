@@ -37,8 +37,11 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
-  }, [pagination.page, filters.sortBy, activeTab]);
+  }, [pagination.page, filters.sortBy, filters.category, filters.search, activeTab]);
 
   const fetchCategories = async () => {
     try {
@@ -63,7 +66,7 @@ export default function ProductsPage() {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 
@@ -263,7 +266,7 @@ export default function ProductsPage() {
             >
               <option value="">All Categories</option>
               {categories && categories.length > 0 && categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.category_name}</option>
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
           </div>

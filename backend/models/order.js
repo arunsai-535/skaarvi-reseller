@@ -248,34 +248,23 @@ const OrderStatusHistory = sequelize.define('OrderStatusHistory', {
     allowNull: false,
     field: 'order_id',
   },
-  oldStatus: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    field: 'old_status',
-  },
-  newStatus: {
+  status: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    field: 'new_status',
-  },
-  changedBy: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    field: 'changed_by',
-  },
-  changedByRole: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    field: 'changed_by_role',
   },
   notes: {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  changedAt: {
+  changedBy: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'changed_by',
+  },
+  createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
-    field: 'changed_at',
+    field: 'created_at',
   },
 }, {
   tableName: 'order_status_history',

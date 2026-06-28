@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Share2, 
   MessageCircle, 
@@ -21,6 +21,30 @@ export default function ProductShareButton({
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef(null);
+
+  useEffect(() => {
+    if (showMenu && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right
+      });
+    }
+
+    // Close menu on scroll
+    const handleScroll = () => {
+      if (showMenu) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      window.addEventListener('scroll', handleScroll, true);
+      return () => window.removeEventListener('scroll', handleScroll, true);
+    }
+  }, [showMenu]);
 
   // Ensure we have a full URL for sharing
   const getFullUrl = () => {
@@ -58,7 +82,8 @@ export default function ProductShareButton({
     return sessionId;
   };
 
-  const handleWhatsAppShare = () => {
+  const handleWhatsAppShare = (e) => {
+    e.stopPropagation();
     const fullUrl = getFullUrl();
     const text = `Check out ${productName}!\n${fullUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -68,7 +93,8 @@ export default function ProductShareButton({
     toast.success('Opening WhatsApp...');
   };
 
-  const handleEmailShare = () => {
+  const handleEmailShare = (e) => {
+    e.stopPropagation();
     const fullUrl = getFullUrl();
     const subject = `Check out ${productName}`;
     const body = `I found this product and thought you might be interested:\n\n${productName}\n\n${fullUrl}`;
@@ -79,7 +105,8 @@ export default function ProductShareButton({
     toast.success('Opening email client...');
   };
 
-  const handleCopyLink = async () => {
+  const handleCopyLink = async (e) => {
+    e.stopPropagation();
     try {
       const fullUrl = getFullUrl();
       await navigator.clipboard.writeText(fullUrl);
@@ -95,7 +122,8 @@ export default function ProductShareButton({
     }
   };
 
-  const handleQRCode = () => {
+  const handleQRCode = (e) => {
+    e.stopPropagation();
     // Generate QR code - you can integrate a QR code library here
     trackShare('qr_code');
     toast.success('QR code feature coming soon!');
@@ -103,45 +131,62 @@ export default function ProductShareButton({
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-50" onClick={(e) => e.stopPropagation()}>
       <button
-        onClick={() => setShowMenu(!showMenu)}
-        className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all"
+        ref={buttonRef}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowMenu(!showMenu);
+        }}
+        className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all"
         title="Share product"
       >
-        <Share2 className="h-5 w-5" />
+        <Share2 className="h-4 w-4" />
       </button>
 
       {showMenu && (
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 z-40"
-            onClick={() => setShowMenu(false)}
+            className="fixed inset-0 z-[9998]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(false);
+            }}
           />
           
-          {/* Share Menu */}
-          <div className="absolute right-0 top-12 z-50 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Share Product</h3>
+          {/* Share Menu - Fixed positioning */}
+          <div 
+            className="fixed w-48 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 z-[9999] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              top: `${menuPosition.top}px`,
+              right: `${menuPosition.right}px`,
+            }}
+          >
+            <div className="p-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Share</h3>
               <button
-                onClick={() => setShowMenu(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                }}
+                className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
               >
-                <X className="h-4 w-4 text-gray-500" />
+                <X className="h-3 w-3 text-gray-500" />
               </button>
             </div>
 
-            <div className="p-2">
+            <div className="p-1.5">
               {/* WhatsApp */}
               <button
                 onClick={handleWhatsAppShare}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-left"
+                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-left"
               >
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                  <MessageCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded-full">
+                  <MessageCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
                 </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                <span className="text-xs font-medium text-gray-900 dark:text-white">
                   WhatsApp
                 </span>
               </button>
@@ -149,12 +194,12 @@ export default function ProductShareButton({
               {/* Email */}
               <button
                 onClick={handleEmailShare}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-left"
+                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-left"
               >
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                  <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                  <Mail className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                <span className="text-xs font-medium text-gray-900 dark:text-white">
                   Email
                 </span>
               </button>
@@ -162,16 +207,16 @@ export default function ProductShareButton({
               {/* Copy Link */}
               <button
                 onClick={handleCopyLink}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-left"
+                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-left"
               >
-                <div className="p-2 bg-gray-100 dark:bg-gray-600 rounded-full">
+                <div className="p-1 bg-gray-100 dark:bg-gray-600 rounded-full">
                   {copied ? (
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
                   ) : (
-                    <LinkIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    <LinkIcon className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
                   )}
                 </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                <span className="text-xs font-medium text-gray-900 dark:text-white">
                   {copied ? 'Copied!' : 'Copy Link'}
                 </span>
               </button>
@@ -179,12 +224,12 @@ export default function ProductShareButton({
               {/* QR Code */}
               <button
                 onClick={handleQRCode}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-left"
+                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-left"
               >
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                  <QrCode className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                  <QrCode className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
                 </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                <span className="text-xs font-medium text-gray-900 dark:text-white">
                   QR Code
                 </span>
               </button>

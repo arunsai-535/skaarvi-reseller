@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { logout as logoutAction } from '@/store/slices/authSlice';
 import toast from 'react-hot-toast';
 
 const SessionContext = createContext({});
@@ -14,6 +16,7 @@ const CHECK_INTERVAL = 1000; // Check every second
 export const SessionProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch();
   const [showWarning, setShowWarning] = useState(false);
   const [remainingTime, setRemainingTime] = useState(IDLE_TIMEOUT);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -63,7 +66,10 @@ export const SessionProvider = ({ children }) => {
 
   // Handle logout
   const handleLogout = useCallback((message) => {
-    // Clear all data
+    // Clear Redux state
+    dispatch(logoutAction());
+    
+    // Clear all data from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('lastActivity');
@@ -77,10 +83,10 @@ export const SessionProvider = ({ children }) => {
     setShowWarning(false);
     setIsAuthenticated(false);
     
-    // Redirect to login
+    // Show message and redirect to home page
     toast.error(message || 'Session expired. Please login again.');
-    router.push('/login');
-  }, [router]);
+    router.push('/');
+  }, [router, dispatch]);
 
   // Continue session (reset timers)
   const continueSession = useCallback(() => {

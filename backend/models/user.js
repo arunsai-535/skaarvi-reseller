@@ -181,9 +181,10 @@ const OTP = sequelize.define('OTP', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  email: {
+  identifier: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'mobile', // Maps to existing 'mobile' column (stores email or mobile)
   },
   otpCode: {
     type: DataTypes.STRING(6),

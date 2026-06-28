@@ -738,36 +738,30 @@ export default function AddProductPage() {
           {/* Pricing & Inventory Section */}
           <Section title="Pricing & Inventory" name="pricing" isOpen={openSections.pricing} onToggle={toggleSection}>
             <div className="grid grid-cols-1 gap-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
-                    Manufacturer Price (₹) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="costPrice"
-                    value={formData.costPrice}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    min="0"
-                    className="input"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text))' }}>
+                  <strong>Note:</strong> You only need to provide the manufacturer price. Skaarvi admin will set the final selling price, MRP, and margins for resellers.
+                </p>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    Final Selling Price (Calculated)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.costPrice ? `₹${(parseFloat(formData.costPrice) * 1.15).toFixed(2)}` : '₹0.00'}
-                    readOnly
-                    className="input cursor-not-allowed opacity-60"
-                  />
-                  <p className="text-xs  mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Includes 5% Skaarvi + 10% Reseller margin</p>
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>
+                  Manufacturer Price (₹) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="costPrice"
+                  value={formData.costPrice}
+                  onChange={handleInputChange}
+                  step="0.01"
+                  min="0"
+                  className="input"
+                  placeholder="0.00"
+                  required
+                />
+                <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Enter the price at which you'll supply this product to Skaarvi
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

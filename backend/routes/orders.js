@@ -175,18 +175,14 @@ router.patch('/:id/status', authMiddleware, manufacturerOnly, async (req, res) =
       });
     }
 
-    const oldStatus = order.orderStatus;
-
     // Update order status
     await order.update({ orderStatus: status });
 
     // Create status history entry
     await OrderStatusHistory.create({
       orderId: order.id,
-      oldStatus,
-      newStatus: status,
+      status: status,
       changedBy: userId,
-      changedByRole: req.user.role,
       notes: notes || null
     });
 
@@ -237,16 +233,12 @@ router.post('/:id/accept', authMiddleware, manufacturerOnly, async (req, res) =>
       });
     }
 
-    const oldStatus = order.orderStatus;
-
-    await order.update({ orderStatus: ORDER_STATUS.ACCEPTED });
+    await order.update({ orderStatus: ORDER_STATUS.PROCESSING });
 
     await OrderStatusHistory.create({
       orderId: order.id,
-      oldStatus,
-      newStatus: ORDER_STATUS.ACCEPTED,
+      status: ORDER_STATUS.PROCESSING,
       changedBy: userId,
-      changedByRole: req.user.role,
       notes: 'Order accepted by manufacturer'
     });
 
@@ -298,14 +290,12 @@ router.post('/:id/ship', authMiddleware, manufacturerOnly, async (req, res) => {
       });
     }
 
-    if (![ORDER_STATUS.ACCEPTED, ORDER_STATUS.PROCESSING].includes(order.orderStatus)) {
+    if (order.orderStatus !== ORDER_STATUS.PROCESSING) {
       return res.status(400).json({
         status: 'error',
         message: `Cannot ship order with status: ${order.orderStatus}`
       });
     }
-
-    const oldStatus = order.orderStatus;
 
     await order.update({
       orderStatus: ORDER_STATUS.SHIPPED,
@@ -316,10 +306,8 @@ router.post('/:id/ship', authMiddleware, manufacturerOnly, async (req, res) => {
 
     await OrderStatusHistory.create({
       orderId: order.id,
-      oldStatus,
-      newStatus: ORDER_STATUS.SHIPPED,
+      status: ORDER_STATUS.SHIPPED,
       changedBy: userId,
-      changedByRole: req.user.role,
       notes: notes || `Shipped via ${courierPartner}, Tracking: ${trackingNumber}`
     });
 
@@ -371,8 +359,6 @@ router.post('/:id/deliver', authMiddleware, manufacturerOnly, async (req, res) =
       });
     }
 
-    const oldStatus = order.orderStatus;
-
     await order.update({
       orderStatus: ORDER_STATUS.DELIVERED,
       deliveredAt: new Date()
@@ -380,10 +366,8 @@ router.post('/:id/deliver', authMiddleware, manufacturerOnly, async (req, res) =
 
     await OrderStatusHistory.create({
       orderId: order.id,
-      oldStatus,
-      newStatus: ORDER_STATUS.DELIVERED,
+      status: ORDER_STATUS.DELIVERED,
       changedBy: userId,
-      changedByRole: req.user.role,
       notes: notes || 'Order delivered successfully'
     });
 

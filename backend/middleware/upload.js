@@ -4,6 +4,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { s3, bucket } = require('../config/aws');
 const { UPLOAD_LIMITS } = require('../config/constants');
+const { validateImageBatch } = require('../utils/imageValidation');
 
 // Memory storage for multer (used for both S3 and local)
 const storage = multer.memoryStorage();
@@ -157,10 +158,82 @@ const uploadMiddleware = {
   ])
 };
 
+/**
+ * Middleware to validate image quality after upload
+ * Checks for blur, brightness, and contrast
+ */
+const validateImageQuality = async (req, res, next) => {
+  try {
+    // Check if there are image files to validate
+    const imageFiles = [];
+    
+    // Handle different file upload patterns
+    if (req.files) {
+      // For fields upload (product media)
+      if (req.files.images) {
+        imageFiles.push(...req.files.images);
+      }
+      
+      // For single field array upload
+      if (Array.isArray(req.files)) {
+        // Filter only image files
+        const images = req.files.filter(file => file.mimetype.startsWith('image/'));
+        imageFiles.push(...images);
+      }
+    } else if (req.file && req.file.mimetype.startsWith('image/')) {
+      // For single file upload
+      imageFiles.push(req.file);
+    }
+
+    // If no images to validate, skip
+    if (imageFiles.length === 0) {
+      return next();
+    }
+
+    console.log(`Validating ${imageFiles.length} image(s) for quality...`);
+
+    // Validate all images
+    const validationResult = await validateImageBatch(imageFiles, {
+      minBlurScore: 100,      // Adjust based on your requirements
+      minBrightness: 20,      // Image should not be too dark
+      maxBrightness: 245,     // Image should not be overexposed
+      minContrast: 30,        // Image should have reasonable contrast
+      minWidth: 300,          // Minimum 300px width
+      minHeight: 300,         // Minimum 300px height
+    });
+
+    // If validation fails, reject the upload
+    if (!validationResult.allValid) {
+      console.log('Image quality validation failed:', validationResult.failures);
+      
+      return res.status(400).json({
+        status: 'error',
+        message: 'One or more images failed quality validation',
+        failures: validationResult.failures.map(f => ({
+          filename: f.filename,
+          message: f.message
+        }))
+      });
+    }
+
+    console.log(`All ${imageFiles.length} image(s) passed quality validation`);
+    next();
+
+  } catch (error) {
+    console.error('Image validation middleware error:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to validate image quality',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   uploadMiddleware,
   uploadLocally,
   uploadProductFile,
   uploadToS3,
-  deleteFromS3
+  deleteFromS3,
+  validateImageQuality
 };

@@ -139,8 +139,8 @@ export default function AnalyticsPage() {
                   onClick={() => handleDateRangeChange(range.value)}
                   className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                     dateRange === range.value
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                      ? 'btn-primary'
+                      : 'btn-outline'
                   }`}
                 >
                   {range.label}
@@ -224,10 +224,8 @@ export default function AnalyticsPage() {
               <button
                 key={sort.value}
                 onClick={() => handleSortChange(sort.value)}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  sortBy === sort.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                className={sortBy === sort.value ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}
+              >
                 }`}
               >
                 {sort.label}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { Building2, Mail, ArrowRight, Loader2, AlertCircle, ArrowLeft, UserPlus } from 'lucide-react';
+import { Building2, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, ArrowLeft, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { setCredentials } from '@/store/slices/authSlice';
 
@@ -11,6 +11,8 @@ export default function ManufacturerLoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,14 +30,19 @@ export default function ManufacturerLoginPage() {
       return;
     }
 
+    if (!password) {
+      setError('Please enter your password');
+      return;
+    }
+
     setLoading(true);
     console.log('[Login] Attempting login with email:', email);
     
     try {
-      const response = await fetch(`/api/auth/login-bypass`, {
+      const response = await fetch(`/api/auth/login/password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, userType: 'manufacturer' }),
+        body: JSON.stringify({ identifier: email, password, userType: 'manufacturer' }),
       });
       
       console.log('[Login] Response status:', response.status);
@@ -43,23 +50,6 @@ export default function ManufacturerLoginPage() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('[Login] Error response:', errorData);
-        
-        if (errorData.code === 'EMAIL_NOT_FOUND') {
-          toast.error('Email not registered. Redirecting to registration...');
-          setTimeout(() => {
-            router.push('/register?email=' + encodeURIComponent(email));
-          }, 2000);
-          return;
-        }
-        if (errorData.code === 'ROLE_MISMATCH') {
-          toast.error('Please use the correct login page for your account type.');
-          return;
-        }
-        if (errorData.code === 'PROXY_ERROR') {
-          toast.error('Connection error. Please check if the backend server is running.');
-          setError(errorData.details || 'Backend connection failed');
-          return;
-        }
         throw new Error(errorData.message || 'Login failed');
       }
 
@@ -68,12 +58,6 @@ export default function ManufacturerLoginPage() {
       
       const { user, token, refreshToken } = data.data;
 
-      // Verify user is manufacturer
-      if (user.role !== 'manufacturer') {
-        toast.error('Please use the correct login page for your account type.');
-        return;
-      }
-
       // Store tokens
       localStorage.setItem('token', token);
       localStorage.setItem('refreshToken', refreshToken);
@@ -81,19 +65,8 @@ export default function ManufacturerLoginPage() {
       // Update Redux store
       dispatch(setCredentials({ user, token, refreshToken }));
 
-      // Route based on manufacturer status
-      if (!user.manufacturer) {
-        toast.success('Welcome! Please complete your manufacturer registration.');
-        router.push('/register');
-      } else if (user.manufacturer.approvalStatus === 'pending') {
-        toast('Your account is pending approval.', { icon: '⏳' });
-        router.push('/pending-approval');
-      } else if (user.manufacturer.approvalStatus === 'approved') {
-        toast.success('Login successful!');
-        router.push('/manufacturer/dashboard');
-      } else {
-        toast.error('Your account status: ' + user.manufacturer.approvalStatus);
-      }
+      toast.success('Login successful!');
+      router.push('/manufacturer/products');
     } catch (err) {
       console.error('[Login] Caught error:', err);
       const errorMessage = err.message || 'Login failed';
@@ -165,6 +138,37 @@ export default function ManufacturerLoginPage() {
               </div>
             </div>
 
+            {/* Password Input */}
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* Login Button */}
             <button
               type="submit"
@@ -190,7 +194,7 @@ export default function ManufacturerLoginPage() {
             <div className="text-center space-y-3">
               <p className="text-sm text-gray-600">New manufacturer?</p>
               <button
-                onClick={() => router.push('/register')}
+                onClick={() => router.push('/manufacturer/register')}
                 className="inline-flex items-center gap-2 text-purple-600 font-semibold hover:text-purple-700 transition-colors"
               >
                 <UserPlus className="w-4 h-4" />

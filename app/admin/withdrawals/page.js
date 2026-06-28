@@ -270,7 +270,7 @@ export default function WithdrawalsPage() {
                               setAction('mark-paid');
                               setShowModal(true);
                             }}
-                            className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                            className="btn btn-primary btn-sm"
                           >
                             Mark Paid
                           </button>

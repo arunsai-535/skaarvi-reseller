@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
 const { authMiddleware, manufacturerOnly, adminOrManufacturer } = require('../middleware/auth');
-const { uploadMiddleware, uploadProductFile, deleteFromS3 } = require('../middleware/upload');
+const { uploadMiddleware, uploadProductFile, deleteFromS3, validateImageQuality } = require('../middleware/upload');
 const { Product, ProductImage, ProductVideo, Category } = require('../models');
 const { PAGINATION, PRODUCT_STATUS, PLATFORM } = require('../config/constants');
 const sequelize = require('../config/database');
@@ -211,7 +211,8 @@ router.get('/:id', authMiddleware, adminOrManufacturer, async (req, res) => {
 router.post('/', 
   authMiddleware, 
   manufacturerOnly, 
-  uploadMiddleware.productMedia, 
+  uploadMiddleware.productMedia,
+  validateImageQuality,
   validateProduct,
   handleValidationErrors,
   async (req, res) => {
@@ -419,6 +420,7 @@ router.put('/:id',
   authMiddleware, 
   manufacturerOnly, 
   uploadMiddleware.productMedia,
+  validateImageQuality,
   async (req, res) => {
     const transaction = await sequelize.transaction();
     

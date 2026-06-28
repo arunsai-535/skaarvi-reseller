@@ -2,24 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { sequelize } = require('../../models');
 const bcrypt = require('bcryptjs');
+const { validateImageQuality } = require('../../middleware/upload');
 const multer = require('multer');
 const path = require('node:path');
 const fs = require('node:fs');
 
-// Configure multer for profile photo upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/profiles');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for profile photo upload - use memory storage for validation
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -35,6 +24,22 @@ const upload = multer({
     cb(new Error('Only image files are allowed'));
   }
 });
+
+// Helper function to save profile photo after validation
+const saveProfilePhoto = (file) => {
+  const uploadDir = path.join(__dirname, '../../uploads/profiles');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+  const filename = 'profile-' + uniqueSuffix + path.extname(file.originalname);
+  const filepath = path.join(uploadDir, filename);
+  
+  fs.writeFileSync(filepath, file.buffer);
+  
+  return `/uploads/profiles/${filename}`;
+};
 
 // @route   GET /api/reseller/profile
 // @desc    Get reseller profile details
@@ -303,7 +308,7 @@ router.put('/password', async (req, res) => {
 // @route   POST /api/reseller/profile/photo
 // @desc    Upload profile photo
 // @access  Private (Reseller only)
-router.post('/photo', upload.single('photo'), async (req, res) => {
+router.post('/photo', upload.single('photo'), validateImageQuality, async (req, res) => {
   try {
     const resellerId = req.user.id;
 
@@ -314,7 +319,8 @@ router.post('/photo', upload.single('photo'), async (req, res) => {
       });
     }
 
-    const photoUrl = `/uploads/profiles/${req.file.filename}`;
+    // Save photo to disk after validation
+    const photoUrl = saveProfilePhoto(req.file);
 
     // Update profile photo URL
     await sequelize.query(`

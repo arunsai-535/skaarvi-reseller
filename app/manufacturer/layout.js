@@ -31,6 +31,11 @@ export default function ManufacturerLayout({ children }) {
   const { user } = useSelector(state => state.auth);
 
   useEffect(() => {
+    // Skip auth check for registration page
+    if (pathname === '/manufacturer/register') {
+      return;
+    }
+    
     // Redirect if not logged in or not manufacturer
     if (!user) {
       router.push('/unauthorized/manufacturer');
@@ -40,7 +45,7 @@ export default function ManufacturerLayout({ children }) {
     if (user.role !== 'manufacturer') {
       router.push('/unauthorized/manufacturer');
     }
-  }, [user, router]);
+  }, [user, router, pathname]);
 
   const handleLogout = async () => {
     try {
@@ -53,7 +58,11 @@ export default function ManufacturerLayout({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     toast.success('Logged out successfully');
-    router.push('/login/manufacturer');
+    
+    // Reset theme to light for public pages
+    localStorage.removeItem('manufacturerTheme');
+    
+    router.push('/');
   };
 
   const navigation = [
@@ -66,6 +75,11 @@ export default function ManufacturerLayout({ children }) {
     { name: 'Settlements', href: '/manufacturer/settlements', icon: Banknote },
     { name: 'Reports', href: '/manufacturer/reports', icon: FileText },
   ];
+
+  // If on registration page, render without layout
+  if (pathname === '/manufacturer/register') {
+    return <>{children}</>;
+  }
 
   if (!user) return null;
 

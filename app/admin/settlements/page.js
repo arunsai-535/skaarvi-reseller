@@ -296,7 +296,7 @@ export default function SettlementsManagementPage() {
               exportToCSV(settlements, headers, `settlements-export-${new Date().toISOString().split('T')[0]}.csv`);
               toast.success('Settlements exported successfully');
             }}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg text-white transition-all flex items-center gap-2"
+            className="btn btn-success"
           >
             <Download className="w-4 h-4" />
             Export
